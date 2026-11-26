@@ -1,0 +1,85 @@
+{
+  "expo": {
+    "name": "BurrowCinema",
+    "slug": "burrowcinema",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "burrowcinema",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#110d0a",
+    "android": {
+      "package": "app.burrowcinema",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#f3bd5c",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true,
+      "permissions": ["android.permission.POST_NOTIFICATIONS"]
+    },
+    "ios": {
+      "bundleIdentifier": "app.burrowcinema",
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-background-task",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#f3bd5c"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#110d0a",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Geist",
+                "fontDefinitions": [
+                  { "path": "./assets/fonts/Geist_400Regular.ttf", "weight": 400 },
+                  { "path": "./assets/fonts/Geist_500Medium.ttf", "weight": 500 },
+                  { "path": "./assets/fonts/Geist_600SemiBold.ttf", "weight": 600 },
+                  { "path": "./assets/fonts/Geist_700Bold.ttf", "weight": 700 }
+                ]
+              }
+            ]
+          },
+          "ios": {
+            "fonts": [
+              "./assets/fonts/Geist_400Regular.ttf",
+              "./assets/fonts/Geist_500Medium.ttf",
+              "./assets/fonts/Geist_600SemiBold.ttf",
+              "./assets/fonts/Geist_700Bold.ttf"
+            ]
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

@@ -1,0 +1,39 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@source '../src';
+
+/*
+ * Same colors as the web app (src/index.css). Hex values come from shared/theme.ts; change both together.
+ * The app is dark only, like the web app.
+ */
+@theme {
+  --color-background: #110d0a;
+  --color-foreground: #f6f1e9;
+  --color-card: #1b1612;
+  --color-card-foreground: #f6f1e9;
+  --color-popover: #1e1814;
+  --color-popover-foreground: #f6f1e9;
+  --color-primary: #f3bd5c;
+  --color-primary-foreground: #271a09;
+  --color-secondary: #2a241f;
+  --color-secondary-foreground: #f6f1e9;
+  --color-muted: #28211d;
+  --color-muted-foreground: #a9a094;
+  --color-accent: #2d2620;
+  --color-accent-foreground: #f6f1e9;
+  --color-destructive: #ef6856;
+  --color-border: #f6ede017;
+  --color-input: #f6ede024;
+  --color-ring: #f3bd5c99;
+  --color-like: #34d399;
+
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 17px;
+  --radius-2xl: 22px;
+
+  /* Geist is embedded as one font family with four weights (app.json), so font-bold etc. just work. */
+  --font-sans: 'Geist';
+}
