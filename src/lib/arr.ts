@@ -1,4 +1,5 @@
-import { load, normalizeUrl, save } from './storage'
+import { normalizeUrl } from './storage'
+import { getSettings, updateSettings } from './userSettings'
 
 export type ArrKind = 'radarr' | 'sonarr'
 export type ArrConfig = { url: string; apiKey: string }
@@ -39,17 +40,16 @@ type ArrRaw = {
   tvdbId?: number
 }
 
-const SETTINGS_KEY = 'bc.arr'
-
 export const ARR_LABEL: Record<ArrKind, string> = { radarr: 'Radarr', sonarr: 'Sonarr' }
 
-export const getArrSettings = () => load<ArrSettings>(SETTINGS_KEY, {})
+export const getArrSettings = (): ArrSettings => getSettings().arr ?? {}
 
+/** Stores the connection in the user's Jellyfin profile so every device has it. */
 export function setArrConfig(kind: ArrKind, config: ArrConfig | null) {
-  const settings = getArrSettings()
-  if (config) settings[kind] = { url: normalizeUrl(config.url), apiKey: config.apiKey.trim() }
-  else delete settings[kind]
-  save(SETTINGS_KEY, settings)
+  const arr = { ...getArrSettings() }
+  if (config) arr[kind] = { url: normalizeUrl(config.url), apiKey: config.apiKey.trim() }
+  else delete arr[kind]
+  return updateSettings({ arr })
 }
 
 async function arrFetch<T>(config: ArrConfig, path: string, init: RequestInit = {}): Promise<T> {

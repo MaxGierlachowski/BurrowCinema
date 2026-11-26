@@ -43,13 +43,14 @@ Bei jedem Push auf `main` wird das Image zusätzlich unter `ghcr.io/maxgierlacho
 ## Wichtig: HTTPS für Jellyfin, Radarr und Sonarr
 Die App spricht Jellyfin, Radarr und Sonarr direkt aus dem Browser an. Weil die App per HTTPS läuft, blockiert der Browser Aufrufe an `http://` Adressen. Alle drei müssen deshalb im Browser per **HTTPS** erreichbar sein, zum Beispiel über denselben Reverse Proxy. Ihre CORS Einstellungen erlauben das bereits standardmäßig.
 
-Radarr und Sonarr werden in der App unter **Einstellungen** verbunden. Den API Key findet man dort jeweils unter **Settings, General, Security**. Die Keys bleiben nur im Browser des jeweiligen Geräts.
+Radarr und Sonarr werden in der App unter **Einstellungen** verbunden. Den API Key findet man dort jeweils unter **Settings, General, Security**. Adresse und Key werden im Jellyfin Profil gespeichert und sind danach auf jedem Gerät verfügbar, auf dem man sich mit demselben Jellyfin Account anmeldet.
 
 ## Wo welche Daten liegen
 | Daten | Ort |
 |---|---|
 | Ordner | Im Jellyfin Profil des Benutzers, plus Zwischenspeicher im Browser |
-| Login, Radarr und Sonarr Zugangsdaten | Nur im Browser des jeweiligen Geräts |
+| Radarr, Sonarr, Auslosung Server, letzte Qualitätsprofile | Im Jellyfin Profil des Benutzers, plus Zwischenspeicher im Browser |
+| Jellyfin Login | Nur im Browser des jeweiligen Geräts |
 | Auslosungen und Swipes | SQLite Datei im Container unter `/data` |
 
 Der Server speichert keine Passwörter und keine Tokens. Er prüft bei jeder Anfrage den Jellyfin Login direkt bei Jellyfin.

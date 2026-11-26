@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { logout as jellyfinLogout, type Session } from '@/lib/jellyfin'
 import { load, save } from '@/lib/storage'
+import { clearSettings } from '@/lib/userSettings'
 
 type AuthContext = {
   session: Session | null
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const update = (next: Session | null) => {
     save(SESSION_KEY, next)
+    clearSettings()
     queryClient.clear()
     setSession(next)
   }

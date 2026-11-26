@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ARR_LABEL, getRequestOptions, requestArr, type ArrItem, type RequestOptions } from '@/lib/arr'
-import { load, save } from '@/lib/storage'
+import { getSettings, updateSettings } from '@/lib/userSettings'
 import { cn } from '@/lib/utils'
 
 type Option = { value: string; label: string; hint?: string }
@@ -42,7 +42,6 @@ const formatSpace = (bytes?: number) => (bytes ? `${(bytes / 1024 ** 4).toFixed(
 export function RequestButton({ item }: { item: ArrItem }) {
   const kind = item.source
   const label = ARR_LABEL[kind]
-  const storageKey = `bc.request.${kind}`
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [profile, setProfile] = useState<string>()
@@ -53,14 +52,14 @@ export function RequestButton({ item }: { item: ArrItem }) {
   const folders = options.data?.folders ?? []
 
   // Preselect what was used last time, otherwise the first entry.
-  const last = load<Partial<RequestOptions>>(storageKey, {})
+  const last: Partial<RequestOptions> = getSettings().lastRequest?.[kind] ?? {}
   const profileId = profile ?? String((profiles.find((p) => p.id === last.qualityProfileId) ?? profiles[0])?.id ?? '')
   const folderPath = folder ?? (folders.find((f) => f.path === last.rootFolderPath) ?? folders[0])?.path ?? ''
 
   const request = useMutation({
     mutationFn: () => {
       const chosen = { qualityProfileId: Number(profileId), rootFolderPath: folderPath }
-      save(storageKey, chosen)
+      updateSettings({ lastRequest: { ...getSettings().lastRequest, [kind]: chosen } }).catch(() => undefined)
       return requestArr(kind, item.id, chosen)
     },
     onSuccess: () => {

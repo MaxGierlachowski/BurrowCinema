@@ -149,17 +149,17 @@ export function webUrl(s: Session, id: string) {
 }
 
 // Folders are stored in the user's display preferences, so every device with the same account sees them.
-function prefsPath(s: Session) {
-  return `/DisplayPreferences/burrowcinema?userId=${s.userId}&client=${CLIENT}`
+function prefsPath(s: Session, doc: string) {
+  return `/DisplayPreferences/${doc}?userId=${s.userId}&client=${CLIENT}`
 }
 
-export async function getCustomPref(s: Session, key: string) {
-  const prefs = await request<DisplayPreferences>(s, prefsPath(s))
+export async function getCustomPref(s: Session, key: string, doc = 'burrowcinema') {
+  const prefs = await request<DisplayPreferences>(s, prefsPath(s, doc))
   return prefs.CustomPrefs?.[key] ?? null
 }
 
-export async function setCustomPref(s: Session, key: string, value: string) {
-  const prefs = await request<DisplayPreferences>(s, prefsPath(s))
+export async function setCustomPref(s: Session, key: string, value: string, doc = 'burrowcinema') {
+  const prefs = await request<DisplayPreferences>(s, prefsPath(s, doc))
   const body = { ...prefs, CustomPrefs: { ...prefs.CustomPrefs, [key]: value } }
-  await request(s, prefsPath(s), { method: 'POST', body: JSON.stringify(body) })
+  await request(s, prefsPath(s, doc), { method: 'POST', body: JSON.stringify(body) })
 }

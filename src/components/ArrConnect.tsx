@@ -27,7 +27,7 @@ export function ArrForm({ kind, onChange }: FormProps) {
     setTesting(true)
     try {
       const status = await testArr(config)
-      setArrConfig(kind, config)
+      await setArrConfig(kind, config).catch(() => toast.warning('Nur auf diesem Gerät gespeichert, Jellyfin Profil nicht erreichbar'))
       setUrl(config.url)
       toast.success(`${label} ${status.version} verbunden`)
       onChange?.(true)
@@ -39,7 +39,7 @@ export function ArrForm({ kind, onChange }: FormProps) {
   }
 
   const disconnect = () => {
-    setArrConfig(kind, null)
+    setArrConfig(kind, null).catch(() => toast.warning('Nur auf diesem Gerät entfernt, Jellyfin Profil nicht erreichbar'))
     setUrl('')
     setApiKey('')
     onChange?.(false)

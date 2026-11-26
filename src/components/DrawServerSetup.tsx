@@ -22,7 +22,7 @@ export function DrawServerForm({ onChange }: { onChange?: (connected: boolean) =
     setTesting(true)
     try {
       await testDrawServer(target)
-      setDrawServer(target)
+      await setDrawServer(target).catch(() => toast.warning('Nur auf diesem Gerät gespeichert, Jellyfin Profil nicht erreichbar'))
       setUrl(target)
       toast.success('Auslosung Server verbunden')
       onChange?.(true)
@@ -34,7 +34,7 @@ export function DrawServerForm({ onChange }: { onChange?: (connected: boolean) =
   }
 
   const disconnect = () => {
-    setDrawServer(null)
+    setDrawServer(null).catch(() => toast.warning('Nur auf diesem Gerät entfernt, Jellyfin Profil nicht erreichbar'))
     setUrl('')
     onChange?.(false)
   }

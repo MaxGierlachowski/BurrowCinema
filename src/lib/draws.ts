@@ -1,6 +1,7 @@
 import type { FolderItem } from './folders'
 import { authHeader, type Session } from './jellyfin'
-import { load, normalizeUrl, save } from './storage'
+import { normalizeUrl } from './storage'
+import { getSettings, updateSettings } from './userSettings'
 
 export type DrawStatus = 'scheduled' | 'running' | 'ended'
 export type DrawItemType = 'Movie' | 'Series' | 'Movie,Series'
@@ -42,13 +43,16 @@ export type NewDraw = {
   items: FolderItem[]
 }
 
-const SERVER_KEY = 'bc.drawServer'
-
 // The all in one Docker image serves the app and the API from the same address.
 const BUNDLED = import.meta.env.VITE_SAME_ORIGIN_API === 'true'
 
-export const getDrawServer = () => load<string>(SERVER_KEY, '') || (BUNDLED ? location.origin : '')
-export const setDrawServer = (url: string | null) => save(SERVER_KEY, url ? normalizeUrl(url) : null)
+export const getDrawServer = () => getSettings().drawServer || (BUNDLED ? location.origin : '')
+export const setDrawServer = (url: string | null) => updateSettings({ drawServer: url ? normalizeUrl(url) : undefined })
+
+/** Remember the address of the all in one container, so other devices and the native app find the server too. */
+export function rememberBundledServer() {
+  if (BUNDLED && !getSettings().drawServer) setDrawServer(location.origin).catch(() => undefined)
+}
 
 export async function testDrawServer(url: string) {
   const res = await fetch(`${normalizeUrl(url)}/api/health`)
