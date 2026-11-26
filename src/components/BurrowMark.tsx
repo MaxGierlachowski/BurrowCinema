@@ -11,10 +11,10 @@ export function BurrowMark({ className }: { className?: string }) {
       className={className}
       aria-hidden
     >
-      <path d="M2.5 20.5h19" />
-      <path d="M6.5 20.5a5.5 5.5 0 0 1 11 0" />
-      <ellipse cx="9.4" cy="8.6" rx="1.6" ry="5" transform="rotate(-12 9.4 8.6)" />
-      <ellipse cx="14.6" cy="8.6" rx="1.6" ry="5" transform="rotate(12 14.6 8.6)" />
+      <path d="M2.5 20h19" />
+      <path d="M7 20a5 5 0 0 1 10 0" />
+      <path d="M10.2 15.2C9 12 8.6 7.6 9.4 3.8c1.4 2.8 2 6.6 2 11.2" />
+      <path d="M13.8 15.2c1.2-3.2 1.6-7.6.8-11.4c-1.4 2.8-2 6.6-2 11.2" />
     </svg>
   )
 }
