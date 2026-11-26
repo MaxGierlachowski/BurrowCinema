@@ -1,3 +1,4 @@
+import { Star } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,7 +29,15 @@ export function PosterCard({ item, badge, action }: Props) {
           {badge && <div className="absolute bottom-1.5 left-1.5">{badge}</div>}
         </div>
         <p className="mt-1.5 truncate text-sm font-medium">{item.title}</p>
-        <p className="text-xs text-muted-foreground">{item.year ?? ' '}</p>
+        <p className="flex justify-between gap-2 text-xs text-muted-foreground">
+          <span>{item.year ?? '\u00a0'}</span>
+          {!!item.rating && (
+            <span className="flex items-center gap-0.5">
+              <Star className="size-3 fill-primary text-primary" />
+              {item.rating.toFixed(1)}
+            </span>
+          )}
+        </p>
       </Link>
       {action && <div className="absolute top-1.5 right-1.5">{action}</div>}
     </div>

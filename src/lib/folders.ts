@@ -11,6 +11,7 @@ export type FolderItem = {
   type: 'movie' | 'series'
   title: string
   year?: number
+  rating?: number
   poster?: string
 }
 
@@ -27,6 +28,7 @@ export function fromJellyfin(s: Session, item: BaseItem): FolderItem {
     type: item.Type === 'Series' ? 'series' : 'movie',
     title: item.Name,
     year: item.ProductionYear,
+    rating: item.CommunityRating,
     poster: posterUrl(s, item),
   }
 }
@@ -39,6 +41,7 @@ export function fromArr(item: ArrItem): FolderItem {
     type: item.source === 'radarr' ? 'movie' : 'series',
     title: item.title,
     year: item.year,
+    rating: item.rating,
     poster: item.poster,
   }
 }
