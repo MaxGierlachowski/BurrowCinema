@@ -1,79 +1,25 @@
-import { CheckCircle2, Loader2, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { Page, PageHeader } from '@/components/AppShell'
+import { ARR_HINT, ArrForm, ConnectedIcon } from '@/components/ArrConnect'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useAuth, useSession } from '@/hooks/useAuth'
-import { ARR_LABEL, getArrSettings, setArrConfig, testArr, type ArrKind } from '@/lib/arr'
-import { isMixedContent, normalizeUrl } from '@/lib/storage'
-
-const PLACEHOLDER: Record<ArrKind, string> = { radarr: 'radarr.example.com', sonarr: 'sonarr.example.com' }
+import { ARR_LABEL, getArrSettings, type ArrKind } from '@/lib/arr'
 
 function ArrCard({ kind }: { kind: ArrKind }) {
-  const saved = getArrSettings()[kind]
-  const [url, setUrl] = useState(saved?.url ?? '')
-  const [apiKey, setApiKey] = useState(saved?.apiKey ?? '')
-  const [connected, setConnected] = useState(Boolean(saved))
-  const [testing, setTesting] = useState(false)
-  const label = ARR_LABEL[kind]
-
-  const connect = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const config = { url: normalizeUrl(url), apiKey: apiKey.trim() }
-    if (isMixedContent(config.url)) return toast.error(`${label} muss per https:// erreichbar sein`)
-    setTesting(true)
-    try {
-      const status = await testArr(config)
-      setArrConfig(kind, config)
-      setUrl(config.url)
-      setConnected(true)
-      toast.success(`${label} ${status.version} verbunden`)
-    } catch (err) {
-      toast.error(`${label}: ${err instanceof TypeError ? 'nicht erreichbar' : (err as Error).message}`)
-    } finally {
-      setTesting(false)
-    }
-  }
-
-  const disconnect = () => {
-    setArrConfig(kind, null)
-    setUrl('')
-    setApiKey('')
-    setConnected(false)
-  }
-
+  const [connected, setConnected] = useState(() => Boolean(getArrSettings()[kind]))
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {label}
-          {connected && <CheckCircle2 className="size-4 text-emerald-400" />}
+          {ARR_LABEL[kind]}
+          {connected && <ConnectedIcon />}
         </CardTitle>
-        <CardDescription>
-          Den API Key findest du in {label} unter Settings, General, Security.
-        </CardDescription>
+        <CardDescription>{ARR_HINT(kind)}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={connect} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor={`${kind}-url`}>Adresse</Label>
-            <Input id={`${kind}-url`} inputMode="url" autoCapitalize="none" placeholder={PLACEHOLDER[kind]} value={url} onChange={(e) => setUrl(e.target.value)} required className="h-10" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${kind}-key`}>API Key</Label>
-            <Input id={`${kind}-key`} type="password" autoComplete="off" value={apiKey} onChange={(e) => setApiKey(e.target.value)} required className="h-10" />
-          </div>
-          <div className="flex gap-2">
-            <Button type="submit" size="lg" disabled={testing}>
-              {testing && <Loader2 className="animate-spin" />}
-              {connected ? 'Erneut testen' : 'Verbinden'}
-            </Button>
-            {connected && <Button type="button" size="lg" variant="ghost" onClick={disconnect}>Trennen</Button>}
-          </div>
-        </form>
+        <ArrForm kind={kind} onChange={setConnected} />
       </CardContent>
     </Card>
   )

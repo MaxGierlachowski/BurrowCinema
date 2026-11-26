@@ -44,8 +44,14 @@ export default function Login() {
   }
 
   return (
-    <div className="relative grid min-h-dvh place-items-center overflow-hidden px-4 py-10">
-      <div className="pointer-events-none absolute -top-40 left-1/2 size-[36rem] -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
+    <div className="relative grid min-h-dvh place-items-center px-4 py-10">
+      <div
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            'radial-gradient(140% 60% at 50% 0%, color-mix(in oklch, var(--primary) 18%, transparent) 0%, color-mix(in oklch, var(--primary) 6%, transparent) 45%, transparent 75%)',
+        }}
+      />
       <div className="relative w-full max-w-sm space-y-6">
         <Logo className="justify-center text-xl" />
         <Card>

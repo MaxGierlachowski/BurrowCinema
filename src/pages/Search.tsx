@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { Search as SearchIcon, Settings } from 'lucide-react'
+import { Search as SearchIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import { Page } from '@/components/AppShell'
+import { ArrDialog, ConnectedIcon } from '@/components/ArrConnect'
 import { EmptyState } from '@/components/EmptyState'
 import { PosterCard, PosterGrid, PosterGridSkeleton } from '@/components/PosterCard'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useSession } from '@/hooks/useAuth'
 import { ARR_LABEL, getArrSettings, searchArr, type ArrKind } from '@/lib/arr'
@@ -28,6 +28,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="mb-3 text-lg font-semibold">{title}</h2>
       {children}
     </section>
+  )
+}
+
+function ArrLink({ kind, connected, onChange }: { kind: ArrKind; connected: boolean; onChange: () => void }) {
+  return (
+    <ArrDialog kind={kind} onChange={onChange}>
+      <button className="inline-flex items-center gap-1 font-medium text-primary underline decoration-primary/40 underline-offset-4">
+        {ARR_LABEL[kind]}
+        {connected && <ConnectedIcon />}
+      </button>
+    </ArrDialog>
   )
 }
 
@@ -59,7 +70,8 @@ export default function Search() {
   const [params, setParams] = useSearchParams()
   const [input, setInput] = useState(params.get('q') ?? '')
   const term = useDebounced(input.trim())
-  const arr = getArrSettings()
+  const [arr, setArr] = useState(getArrSettings)
+  const refreshArr = () => setArr(getArrSettings())
 
   useEffect(() => setParams(term ? { q: term } : {}, { replace: true }), [term, setParams])
 
@@ -92,7 +104,13 @@ export default function Search() {
           <EmptyState
             icon={SearchIcon}
             title="Was möchtest du finden?"
-            text="Gesucht wird in deiner Jellyfin Bibliothek und, wenn eingerichtet, auch in Radarr und Sonarr."
+            text={
+              <>
+                Gesucht wird in deiner Jellyfin Bibliothek und, wenn eingerichtet, auch in{' '}
+                <ArrLink kind="radarr" connected={!!arr.radarr} onChange={refreshArr} /> und{' '}
+                <ArrLink kind="sonarr" connected={!!arr.sonarr} onChange={refreshArr} />.
+              </>
+            }
           />
         </div>
       )}
@@ -115,13 +133,12 @@ export default function Search() {
       )}
 
       {searching && !arr.radarr && !arr.sonarr && (
-        <div className="mt-8 flex flex-col items-start gap-3 rounded-xl border bg-card p-4 text-sm sm:flex-row sm:items-center">
-          <p className="flex-1 text-muted-foreground">
-            Verbinde Radarr oder Sonarr, um auch Titel zu finden, die noch nicht heruntergeladen sind.
+        <div className="mt-8 rounded-xl border bg-card p-4 text-sm">
+          <p className="text-muted-foreground">
+            Verbinde <ArrLink kind="radarr" connected={false} onChange={refreshArr} /> oder{' '}
+            <ArrLink kind="sonarr" connected={false} onChange={refreshArr} />, um auch Titel zu finden, die noch nicht
+            heruntergeladen sind.
           </p>
-          <Button asChild variant="secondary">
-            <Link to="/settings"><Settings /> Einrichten</Link>
-          </Button>
         </div>
       )}
     </Page>
