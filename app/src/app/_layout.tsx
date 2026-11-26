@@ -15,6 +15,8 @@ import { AuthProvider, useAuth } from '@shared/hooks/useAuth'
 import { colors } from '@shared/theme'
 import { syncSettings } from '@shared/userSettings'
 import { persistOptions, queryClient } from '@/lib/queryClient'
+// Auslosung: defines the background task at module level, registers it and opens tapped notifications.
+import { useDrawNotifications } from '@/lib/backgroundTask'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -32,6 +34,7 @@ function RootNavigator() {
     staleTime: Infinity,
   })
   const ready = !session || !settings.isPending
+  useDrawNotifications(ready && !!session) // Auslosung notifications
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync()
