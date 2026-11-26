@@ -5,9 +5,9 @@ import { ARR_HINT, ArrForm, ConnectedIcon } from '@/components/ArrConnect'
 import { DRAW_SERVER_HINT, DrawServerForm } from '@/components/DrawServerSetup'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useAuth, useSession } from '@/hooks/useAuth'
-import { ARR_LABEL, getArrSettings, type ArrKind } from '@/lib/arr'
-import { getDrawServer } from '@/lib/draws'
+import { useAuth, useSession } from '@shared/hooks/useAuth'
+import { ARR_LABEL, getArrSettings, type ArrKind } from '@shared/arr'
+import { getDrawServer } from '@shared/draws'
 
 function ArrCard({ kind }: { kind: ArrKind }) {
   const [connected, setConnected] = useState(() => Boolean(getArrSettings()[kind]))

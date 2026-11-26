@@ -14,8 +14,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSession } from '@/hooks/useAuth'
-import { deleteDraw, describeStatus, endDraw, formatDate, getDraw, shuffleFor, swipe, TYPE_LABEL, type DrawDetail as Draw, type DrawItem } from '@/lib/draws'
+import { useSession } from '@shared/hooks/useAuth'
+import { deleteDraw, describeStatus, endDraw, formatDate, getDraw, shuffleFor, swipe, TYPE_LABEL, type DrawDetail as Draw, type DrawItem } from '@shared/draws'
 
 function Results({ draw }: { draw: Draw }) {
   const votes = new Map(draw.results?.map((r) => [r.key, r]))

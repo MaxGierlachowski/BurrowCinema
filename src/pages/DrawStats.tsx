@@ -9,8 +9,8 @@ import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useSession } from '@/hooks/useAuth'
-import { getStats } from '@/lib/draws'
+import { useSession } from '@shared/hooks/useAuth'
+import { getStats } from '@shared/draws'
 
 const share = (r: VoteRow) => r.likes / r.votes
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { loadFolders, saveFolders, type Folder, type FolderItem } from '@/lib/folders'
+import { loadFolders, saveFolders, type Folder, type FolderItem } from '../folders'
+import { getPlatform, uuid } from '../platform'
 import { useSession } from './useAuth'
 
 const KEY = ['folders']
@@ -13,7 +13,7 @@ export function useFolders() {
   const mutation = useMutation({
     mutationFn: (folders: Folder[]) => saveFolders(session, folders),
     onMutate: (folders) => queryClient.setQueryData(KEY, folders),
-    onError: () => toast.error('Ordner konnten nicht mit Jellyfin synchronisiert werden'),
+    onError: () => getPlatform().notify.error('Ordner konnten nicht mit Jellyfin synchronisiert werden'),
     scope: { id: 'folders' },
   })
 
@@ -27,7 +27,7 @@ export function useFolders() {
     folders: query.data ?? [],
     isLoading: query.isLoading,
     create: (name: string, items: FolderItem[] = []) =>
-      update((folders) => [...folders, { id: crypto.randomUUID(), name, items, createdAt: Date.now() }]),
+      update((folders) => [...folders, { id: uuid(), name, items, createdAt: Date.now() }]),
     rename: (id: string, name: string) => editFolder(id, (f) => ({ ...f, name })),
     remove: (id: string) => update((folders) => folders.filter((f) => f.id !== id)),
     restore: (folder: Folder) => update((folders) => [...folders, folder]),

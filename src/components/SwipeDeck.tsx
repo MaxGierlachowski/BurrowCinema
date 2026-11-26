@@ -2,7 +2,7 @@ import { Heart, Undo2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import type { DrawItem } from '@/lib/draws'
+import type { DrawItem } from '@shared/draws'
 import { cn } from '@/lib/utils'
 import { Poster } from './PosterCard'
 

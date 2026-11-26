@@ -2,7 +2,7 @@ import { Star } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Skeleton } from '@/components/ui/skeleton'
-import { itemLink, type FolderItem } from '@/lib/folders'
+import { itemLink, type FolderItem } from '@shared/folders'
 
 export function Poster({ src, title }: { src?: string; title: string }) {
   const [failed, setFailed] = useState(false)

@@ -6,9 +6,9 @@ import { EmptyState } from '@/components/EmptyState'
 import { LoadMore, PosterCard, PosterGrid, PosterGridSkeleton } from '@/components/PosterCard'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useSession } from '@/hooks/useAuth'
-import { fromJellyfin } from '@/lib/folders'
-import { getItems, type ItemType, type SortKey } from '@/lib/jellyfin'
+import { useSession } from '@shared/hooks/useAuth'
+import { fromJellyfin } from '@shared/folders'
+import { getItems, type ItemType, type SortKey } from '@shared/jellyfin'
 
 const SORTS: Record<SortKey, string> = {
   DateCreated: 'Neu hinzugefügt',

@@ -8,11 +8,11 @@ import { EmptyState } from '@/components/EmptyState'
 import { Poster } from '@/components/PosterCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useSession } from '@/hooks/useAuth'
-import { useFolders } from '@/hooks/useFolders'
-import { fromJellyfin } from '@/lib/folders'
-import { formatRating, formatRuntime, plural, ticksToMinutes } from '@/lib/format'
-import { getItem, getSeasons, imageUrl, personImageUrl, posterUrl, webUrl, type BaseItem } from '@/lib/jellyfin'
+import { useSession } from '@shared/hooks/useAuth'
+import { useFolders } from '@shared/hooks/useFolders'
+import { fromJellyfin } from '@shared/folders'
+import { formatRating, formatRuntime, plural, ticksToMinutes } from '@shared/format'
+import { getItem, getSeasons, imageUrl, personImageUrl, posterUrl, webUrl, type BaseItem } from '@shared/jellyfin'
 
 function Seasons({ series }: { series: BaseItem }) {
   const session = useSession()

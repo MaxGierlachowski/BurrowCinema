@@ -1,3 +1,4 @@
+import { emitUnauthorized, getPlatform, query, uuid } from './platform'
 import { load, normalizeUrl, save } from './storage'
 
 export type Session = { server: string; token: string; userId: string; userName: string }
@@ -38,14 +39,14 @@ const DETAIL_FIELDS = 'Overview,Genres,People,Studios,Taglines,ProviderIds,Child
 function deviceId() {
   let id = load('bc.deviceId', '')
   if (!id) {
-    id = crypto.randomUUID()
+    id = uuid()
     save('bc.deviceId', id)
   }
   return id
 }
 
 export function authHeader(token?: string) {
-  const parts = [`Client="${CLIENT}"`, `Device="Web Browser"`, `DeviceId="${deviceId()}"`, `Version="1.0.0"`]
+  const parts = [`Client="${CLIENT}"`, `Device="${getPlatform().deviceName}"`, `DeviceId="${deviceId()}"`, `Version="1.0.0"`]
   if (token) parts.push(`Token="${token}"`)
   return `MediaBrowser ${parts.join(', ')}`
 }
@@ -56,7 +57,7 @@ async function request<T>(s: Session, path: string, init: RequestInit = {}): Pro
     headers: { 'Content-Type': 'application/json', Authorization: authHeader(s.token) },
   })
   if (res.status === 401) {
-    window.dispatchEvent(new Event('bc:unauthorized'))
+    emitUnauthorized()
     throw new Error('Sitzung abgelaufen, bitte neu anmelden')
   }
   if (!res.ok) throw new Error(`Jellyfin antwortet mit ${res.status}`)
@@ -82,30 +83,30 @@ export function logout(s: Session) {
 
 export function getItems(s: Session, opts: { type: string; sort?: SortKey; start?: number; search?: string; limit?: number }) {
   const sort = opts.sort ?? 'SortName'
-  const params = new URLSearchParams({
+  const params = query({
     userId: s.userId,
     IncludeItemTypes: opts.type,
-    Recursive: 'true',
+    Recursive: true,
     SortBy: sort === 'SortName' ? 'SortName' : `${sort},SortName`,
     SortOrder: sort === 'SortName' ? 'Ascending' : 'Descending',
-    StartIndex: String(opts.start ?? 0),
-    Limit: String(opts.limit ?? PAGE_SIZE),
+    StartIndex: opts.start ?? 0,
+    Limit: opts.limit ?? PAGE_SIZE,
     Fields: LIST_FIELDS,
-    ImageTypeLimit: '1',
+    ImageTypeLimit: 1,
+    SearchTerm: opts.search,
   })
-  if (opts.search) params.set('SearchTerm', opts.search)
   return request<ItemsResponse>(s, `/Items?${params}`)
 }
 
 export async function getItem(s: Session, id: string) {
-  const params = new URLSearchParams({ userId: s.userId, ids: id, Fields: DETAIL_FIELDS })
+  const params = query({ userId: s.userId, ids: id, Fields: DETAIL_FIELDS })
   const { Items } = await request<ItemsResponse>(s, `/Items?${params}`)
   if (!Items[0]) throw new Error('Titel nicht gefunden')
   return Items[0]
 }
 
 export async function getSeasons(s: Session, seriesId: string) {
-  const params = new URLSearchParams({ userId: s.userId, Fields: 'ChildCount' })
+  const params = query({ userId: s.userId, Fields: 'ChildCount' })
   const { Items } = await request<ItemsResponse>(s, `/Shows/${seriesId}/Seasons?${params}`)
   return Items
 }

@@ -10,9 +10,9 @@ import { EmptyState } from '@/components/EmptyState'
 import { Poster } from '@/components/PosterCard'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSession } from '@/hooks/useAuth'
-import { describeStatus, getDrawServer, listDraws, TYPE_LABEL, type DrawStatus, type DrawSummary } from '@/lib/draws'
-import { plural } from '@/lib/format'
+import { useSession } from '@shared/hooks/useAuth'
+import { describeStatus, getDrawServer, listDraws, TYPE_LABEL, type DrawStatus, type DrawSummary } from '@shared/draws'
+import { plural } from '@shared/format'
 
 const SECTIONS: { status: DrawStatus; title: string }[] = [
   { status: 'running', title: 'Laufend' },

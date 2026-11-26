@@ -16,9 +16,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useFolders } from '@/hooks/useFolders'
-import type { FolderItem } from '@/lib/folders'
-import { plural } from '@/lib/format'
+import { useFolders } from '@shared/hooks/useFolders'
+import type { FolderItem } from '@shared/folders'
+import { plural } from '@shared/format'
 
 const FILTERS: Record<string, { label: string; test: (i: FolderItem) => boolean }> = {
   all: { label: 'Alle', test: () => true },

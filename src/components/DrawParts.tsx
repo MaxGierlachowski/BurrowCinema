@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { Badge } from '@/components/ui/badge'
-import type { DrawItem, Participant } from '@/lib/draws'
-import { itemLink } from '@/lib/folders'
+import type { DrawItem, Participant } from '@shared/draws'
+import { itemLink } from '@shared/folders'
 import { cn } from '@/lib/utils'
 import { Poster } from './PosterCard'
 

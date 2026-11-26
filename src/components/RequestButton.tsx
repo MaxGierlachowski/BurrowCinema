@@ -5,8 +5,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ARR_LABEL, getRequestOptions, requestArr, type ArrItem, type RequestOptions } from '@/lib/arr'
-import { getSettings, updateSettings } from '@/lib/userSettings'
+import { ARR_LABEL, getRequestOptions, requestArr, type ArrItem, type RequestOptions } from '@shared/arr'
+import { getSettings, updateSettings } from '@shared/userSettings'
 import { cn } from '@/lib/utils'
 
 type Option = { value: string; label: string; hint?: string }

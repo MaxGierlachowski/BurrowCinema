@@ -6,9 +6,9 @@ import { NameDialog } from '@/components/NameDialog'
 import { Poster } from '@/components/PosterCard'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useFolders } from '@/hooks/useFolders'
-import type { Folder } from '@/lib/folders'
-import { plural } from '@/lib/format'
+import { useFolders } from '@shared/hooks/useFolders'
+import type { Folder } from '@shared/folders'
+import { plural } from '@shared/format'
 
 function FolderCard({ folder }: { folder: Folder }) {
   const covers = folder.items.slice(-4).reverse()

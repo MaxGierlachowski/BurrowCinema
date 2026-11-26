@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/hooks/useAuth'
-import { login } from '@/lib/jellyfin'
-import { isMixedContent, load, normalizeUrl, save } from '@/lib/storage'
+import { useAuth } from '@shared/hooks/useAuth'
+import { login } from '@shared/jellyfin'
+import { isMixedContent, load, normalizeUrl, save } from '@shared/storage'
 
 export default function Login() {
   const { session, signIn } = useAuth()

@@ -7,10 +7,10 @@ import { EmptyState } from '@/components/EmptyState'
 import { RequestButton } from '@/components/RequestButton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useFolders } from '@/hooks/useFolders'
-import { ARR_LABEL, getArrItem, type ArrKind } from '@/lib/arr'
-import { fromArr } from '@/lib/folders'
-import { formatRating, formatRuntime, plural } from '@/lib/format'
+import { useFolders } from '@shared/hooks/useFolders'
+import { ARR_LABEL, getArrItem, type ArrKind } from '@shared/arr'
+import { fromArr } from '@shared/folders'
+import { formatRating, formatRuntime, plural } from '@shared/format'
 
 export default function ExternalDetail() {
   const { source = 'radarr', id = '' } = useParams() as { source: ArrKind; id: string }

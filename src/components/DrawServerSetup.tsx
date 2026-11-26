@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { getDrawServer, setDrawServer, testDrawServer } from '@/lib/draws'
-import { isMixedContent, normalizeUrl } from '@/lib/storage'
+import { getDrawServer, setDrawServer, testDrawServer } from '@shared/draws'
+import { isMixedContent, normalizeUrl } from '@shared/storage'
 
 export const DRAW_SERVER_HINT = 'Adresse des BurrowCinema Servers, der die Auslosungen für alle speichert.'
 

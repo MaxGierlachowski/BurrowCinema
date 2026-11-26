@@ -5,9 +5,10 @@ import { createHashRouter, Navigate, RouterProvider } from 'react-router'
 import { AppShell } from '@/components/AppShell'
 import { BurrowMark } from '@/components/BurrowMark'
 import { Toaster } from '@/components/ui/sonner'
-import { AuthProvider, useAuth } from '@/hooks/useAuth'
-import { rememberBundledServer } from '@/lib/draws'
-import { syncSettings } from '@/lib/userSettings'
+import { configurePlatform } from '@shared/platform'
+import { AuthProvider, useAuth } from '@shared/hooks/useAuth'
+import { rememberBundledServer } from '@shared/draws'
+import { syncSettings } from '@shared/userSettings'
 import DrawDetail from '@/pages/DrawDetail'
 import Draws from '@/pages/Draws'
 import DrawStats from '@/pages/DrawStats'
@@ -20,7 +21,17 @@ import Login from '@/pages/Login'
 import NewDraw from '@/pages/NewDraw'
 import Search from '@/pages/Search'
 import Settings from '@/pages/Settings'
+import { toast } from 'sonner'
 import './index.css'
+
+configurePlatform({
+  storage: localStorage,
+  deviceName: 'Web Browser',
+  notify: toast,
+  blocksInsecureRequests: location.protocol === 'https:',
+  // The all in one Docker image serves the app and the API from the same address.
+  bundledServer: import.meta.env.VITE_SAME_ORIGIN_API === 'true' ? location.origin : undefined,
+})
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5 * 60_000, retry: 1, refetchOnWindowFocus: false } },

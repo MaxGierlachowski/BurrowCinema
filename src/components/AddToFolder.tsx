@@ -11,9 +11,9 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
-import { useFolders } from '@/hooks/useFolders'
-import type { FolderItem } from '@/lib/folders'
-import { plural } from '@/lib/format'
+import { useFolders } from '@shared/hooks/useFolders'
+import type { FolderItem } from '@shared/folders'
+import { plural } from '@shared/format'
 import { cn } from '@/lib/utils'
 
 export function AddToFolder({ item, variant = 'default' }: { item: FolderItem; variant?: 'default' | 'secondary' }) {

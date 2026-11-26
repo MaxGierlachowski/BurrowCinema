@@ -9,10 +9,10 @@ import { EmptyState } from '@/components/EmptyState'
 import { PosterCard, PosterGrid, PosterGridSkeleton } from '@/components/PosterCard'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { useSession } from '@/hooks/useAuth'
-import { ARR_LABEL, getArrSettings, searchArr, type ArrKind } from '@/lib/arr'
-import { fromArr, fromJellyfin } from '@/lib/folders'
-import { getItems } from '@/lib/jellyfin'
+import { useSession } from '@shared/hooks/useAuth'
+import { ARR_LABEL, getArrSettings, searchArr, type ArrKind } from '@shared/arr'
+import { fromArr, fromJellyfin } from '@shared/folders'
+import { getItems } from '@shared/jellyfin'
 
 function useDebounced(value: string, delay = 400) {
   const [debounced, setDebounced] = useState(value)

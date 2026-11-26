@@ -1,8 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { logout as jellyfinLogout, type Session } from '@/lib/jellyfin'
-import { load, save } from '@/lib/storage'
-import { clearSettings } from '@/lib/userSettings'
+import { logout as jellyfinLogout, type Session } from '../jellyfin'
+import { onUnauthorized } from '../platform'
+import { load, save } from '../storage'
+import { clearSettings } from '../userSettings'
 
 type AuthContext = {
   session: Session | null
@@ -29,11 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     update(null)
   }
 
-  useEffect(() => {
-    const onUnauthorized = () => update(null)
-    window.addEventListener('bc:unauthorized', onUnauthorized)
-    return () => window.removeEventListener('bc:unauthorized', onUnauthorized)
-  })
+  useEffect(() => onUnauthorized(() => update(null)))
 
   return <Context.Provider value={{ session, signIn: update, signOut }}>{children}</Context.Provider>
 }

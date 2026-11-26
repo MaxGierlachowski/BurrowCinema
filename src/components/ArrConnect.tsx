@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ARR_LABEL, getArrSettings, setArrConfig, testArr, type ArrKind } from '@/lib/arr'
-import { isMixedContent, normalizeUrl } from '@/lib/storage'
+import { ARR_LABEL, getArrSettings, setArrConfig, testArr, type ArrKind } from '@shared/arr'
+import { isMixedContent, normalizeUrl } from '@shared/storage'
 
 export const ARR_HINT = (kind: ArrKind) => `Den API Key findest du in ${ARR_LABEL[kind]} unter Settings, General, Security.`
 

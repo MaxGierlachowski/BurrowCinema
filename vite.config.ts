@@ -6,5 +6,10 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
-  resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
+  resolve: {
+    alias: {
+      '@shared': path.resolve(import.meta.dirname, 'shared'),
+      '@': path.resolve(import.meta.dirname, 'src'),
+    },
+  },
 })

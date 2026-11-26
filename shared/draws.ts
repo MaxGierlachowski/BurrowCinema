@@ -1,6 +1,7 @@
 import type { FolderItem } from './folders'
 import { authHeader, type Session } from './jellyfin'
 import { normalizeUrl } from './storage'
+import { getPlatform } from './platform'
 import { getSettings, updateSettings } from './userSettings'
 
 export type DrawStatus = 'scheduled' | 'running' | 'ended'
@@ -43,15 +44,13 @@ export type NewDraw = {
   items: FolderItem[]
 }
 
-// The all in one Docker image serves the app and the API from the same address.
-const BUNDLED = import.meta.env.VITE_SAME_ORIGIN_API === 'true'
-
-export const getDrawServer = () => getSettings().drawServer || (BUNDLED ? location.origin : '')
+export const getDrawServer = () => getSettings().drawServer || getPlatform().bundledServer || ''
 export const setDrawServer = (url: string | null) => updateSettings({ drawServer: url ? normalizeUrl(url) : undefined })
 
 /** Remember the address of the all in one container, so other devices and the native app find the server too. */
 export function rememberBundledServer() {
-  if (BUNDLED && !getSettings().drawServer) setDrawServer(location.origin).catch(() => undefined)
+  const bundled = getPlatform().bundledServer
+  if (bundled && !getSettings().drawServer) setDrawServer(bundled).catch(() => undefined)
 }
 
 export async function testDrawServer(url: string) {
@@ -108,16 +107,22 @@ export function shuffleFor<T>(items: T[], seedText: string) {
 }
 
 const dateFormat = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-const relative = new Intl.RelativeTimeFormat('de', { numeric: 'auto' })
 
 export const formatDate = (ms: number) => dateFormat.format(ms)
 
+const UNITS: [limit: number, size: number, one: string, many: string][] = [
+  [60, 1, 'Minute', 'Minuten'],
+  [48 * 60, 60, 'Stunde', 'Stunden'],
+  [Infinity, 24 * 60, 'Tag', 'Tagen'],
+]
+
+/** "in 3 Stunden", "vor 2 Tagen"; written by hand because Hermes lacks Intl.RelativeTimeFormat. */
 export function formatRelative(ms: number) {
   const minutes = Math.round((ms - Date.now()) / 60_000)
-  if (Math.abs(minutes) < 60) return relative.format(minutes, 'minute')
-  const hours = Math.round(minutes / 60)
-  if (Math.abs(hours) < 48) return relative.format(hours, 'hour')
-  return relative.format(Math.round(hours / 24), 'day')
+  if (minutes === 0) return 'jetzt'
+  const [, size, one, many] = UNITS.find(([limit]) => Math.abs(minutes) < limit)!
+  const n = Math.round(Math.abs(minutes) / size)
+  return `${minutes > 0 ? 'in' : 'vor'} ${n} ${n === 1 ? one : many}`
 }
 
 export function describeStatus(draw: DrawSummary) {
