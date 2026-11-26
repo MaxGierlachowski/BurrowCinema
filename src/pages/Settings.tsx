@@ -68,7 +68,7 @@ export default function Settings() {
         <ArrCard kind="sonarr" />
         <DrawServerCard />
         <p className="px-1 text-xs text-muted-foreground">
-          API Keys bleiben nur in diesem Browser gespeichert. Ordner werden in deinem Jellyfin Profil gespeichert und
+          API Keys, Server Adressen und Ordner werden in deinem Jellyfin Profil gespeichert und
           sind auf allen Geräten verfügbar.
         </p>
       </div>
