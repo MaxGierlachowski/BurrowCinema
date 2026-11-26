@@ -19,18 +19,12 @@ export function BurrowMark({ className }: { className?: string }) {
   )
 }
 
-/** Two ears that peek out from behind an element; place inside a relative parent, behind the content. */
+/** Two solid ears that peek out from behind an element; place inside a relative parent, behind the content. */
 export function PeekingEars({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 52" className={className} aria-hidden>
-      <g fill="var(--card)" stroke="color-mix(in oklch, var(--foreground) 10%, transparent)" strokeWidth={1}>
-        <ellipse cx="13" cy="28" rx="5.5" ry="22" transform="rotate(-9 13 28)" />
-        <ellipse cx="27" cy="28" rx="5.5" ry="22" transform="rotate(9 27 28)" />
-      </g>
-      <g fill="color-mix(in oklch, var(--primary) 14%, transparent)">
-        <ellipse cx="13" cy="26" rx="2.2" ry="15" transform="rotate(-9 13 26)" />
-        <ellipse cx="27" cy="26" rx="2.2" ry="15" transform="rotate(9 27 26)" />
-      </g>
+    <svg viewBox="0 0 40 52" className={className} aria-hidden fill="color-mix(in oklch, var(--primary) 22%, var(--card))">
+      <path d="M18 52C13 40 9.5 24 12 3c5.5 8 7.5 24 7.5 49Z" />
+      <path d="M22 52c5-12 8.5-28 6-49c-5.5 8-7.5 24-7.5 49Z" />
     </svg>
   )
 }
