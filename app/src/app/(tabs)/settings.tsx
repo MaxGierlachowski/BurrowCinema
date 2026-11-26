@@ -1,10 +1,12 @@
 import Constants from 'expo-constants'
+import * as Notifications from 'expo-notifications'
 import { CircleCheck, LogOut } from 'lucide-react-native'
 import { useState, type ReactNode } from 'react'
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import { ARR_LABEL, getArrSettings, type ArrKind } from '@shared/arr'
 import { getDrawServer } from '@shared/draws'
 import { useAuth, useSession } from '@shared/hooks/useAuth'
+import { NotificationsCard } from '@/components/draws/NotificationsCard'
 import { PageHeader, Screen } from '@/components/Screen'
 import { ARR_HINT, ArrForm } from '@/components/settings/ArrForm'
 import { DRAW_SERVER_HINT, DrawServerForm } from '@/components/settings/DrawServerForm'
@@ -57,7 +59,15 @@ function JellyfinCard() {
   const confirmSignOut = () =>
     Alert.alert('Abmelden', 'Möchtest du dich wirklich abmelden?', [
       { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Abmelden', style: 'destructive', onPress: signOut },
+      {
+        text: 'Abmelden',
+        style: 'destructive',
+        onPress: () => {
+          // Reminders belong to this user; the next person on this device should not get them.
+          Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined)
+          signOut()
+        },
+      },
     ])
 
   return (
@@ -86,7 +96,7 @@ export default function Settings() {
               <ArrCard kind="radarr" />
               <ArrCard kind="sonarr" />
               <DrawServerCard />
-              {/* Notifications card is added by the draw feature */}
+              <NotificationsCard />
               <Text className="px-1 text-xs text-muted-foreground">
                 API Keys, Server Adressen und Ordner werden in deinem Jellyfin Profil gespeichert und sind auf allen
                 Geräten verfügbar.

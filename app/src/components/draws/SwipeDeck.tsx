@@ -14,19 +14,20 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { scheduleOnRN } from 'react-native-worklets'
+import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets'
 import type { DrawItem } from '@shared/draws'
 import { colors } from '@shared/theme'
 import { Poster } from '@/components/PosterCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
 import { haptic } from '@/lib/haptics'
 
 const THRESHOLD = 100
 const FLING_VELOCITY = 900
 const LEAVE_MS = 220
-/** Height of everything else on the detail screen: header, progress, buttons, gaps. */
+/** Height of everything else on the detail screen: header, progress, buttons and gaps. */
 const RESERVED = 214
 
 type Props = {
@@ -38,10 +39,15 @@ type Props = {
 
 type CardHandle = { fly: (like: boolean) => void }
 
-const clamp01 = (value: number) => {
+/** 0 at rest, 1 at the swipe threshold. */
+const progress = (distance: number) => {
   'worklet'
-  return interpolate(value, [0, THRESHOLD], [0, 1], Extrapolation.CLAMP)
+  return interpolate(distance, [0, THRESHOLD], [0, 1], Extrapolation.CLAMP)
 }
+
+// Plain JS functions, called from the UI thread with scheduleOnRN.
+const feedback = (like: boolean) => (like ? haptic.success() : haptic.tap())
+const crossed = () => haptic.select()
 
 function CardFace({ item }: { item: DrawItem }) {
   const meta = [item.year, item.type === 'series' ? 'Serie' : 'Film', item.rating && `★ ${item.rating.toFixed(1)}`].filter(Boolean).join(' · ')
@@ -66,8 +72,10 @@ function CardFace({ item }: { item: DrawItem }) {
   )
 }
 
-function Stamp({ label, color, side, opacity }: { label: string; color: string; side: 'left' | 'right'; opacity: SharedValue<number> }) {
-  const style = useAnimatedStyle(() => ({ opacity: opacity.value }))
+/** "WILL ICH" or "NÖ"; fades in with the drag distance in its direction. */
+function Stamp({ label, color, side, x }: { label: string; color: string; side: 'left' | 'right'; x: SharedValue<number> }) {
+  const direction = side === 'left' ? 1 : -1
+  const style = useAnimatedStyle(() => ({ opacity: progress(x.get() * direction) }))
   return (
     <Animated.View
       pointerEvents="none"
@@ -81,108 +89,99 @@ function Stamp({ label, color, side, opacity }: { label: string; color: string; 
   )
 }
 
-/**
- * The draggable top card. Position lives in shared values and the pan gesture runs as a worklet,
- * so dragging never touches the JS thread. Only the final decision is sent back with scheduleOnRN.
- */
-function TopCard({ item, width, drag, onDecide, ref }: {
+type DeckCardProps = {
   item: DrawItem
-  width: number
+  isTop: boolean
+  screenWidth: number
   drag: SharedValue<number>
   onDecide: (like: boolean) => void
-  ref: Ref<CardHandle>
-}) {
+  ref?: Ref<CardHandle>
+}
+
+/**
+ * One card of the deck. The same instance moves from second place to the top, so its poster stays loaded.
+ * On top, its position lives in shared values and the pan callbacks are worklets: dragging runs entirely
+ * on the UI thread, only the decision goes back to JS with scheduleOnRN. Behind, it grows with the drag.
+ */
+function DeckCard({ item, isTop, screenWidth, drag, onDecide, ref }: DeckCardProps) {
   const x = useSharedValue(0)
   const y = useSharedValue(0)
   const pastThreshold = useSharedValue(false)
   const leaving = useSharedValue(false)
 
   useAnimatedReaction(
-    () => x.value,
-    (value) => drag.set(value),
+    () => x.get(),
+    (value) => {
+      if (isTop) drag.set(value)
+    },
+    [isTop],
   )
 
   const fly = (like: boolean) => {
     'worklet'
-    if (leaving.value) return
-    leaving.value = true
-    scheduleOnRN(like ? haptic.success : haptic.tap)
-    y.value = withTiming(y.value + 40, { duration: LEAVE_MS })
-    x.value = withTiming((like ? 1 : -1) * width * 1.5, { duration: LEAVE_MS }, (finished) => {
-      if (finished) scheduleOnRN(onDecide, like)
-    })
+    if (leaving.get()) return
+    leaving.set(true)
+    scheduleOnRN(feedback, like)
+    y.set(withTiming(y.get() + 40, { duration: LEAVE_MS }))
+    x.set(
+      withTiming((like ? 1 : -1) * screenWidth * 1.5, { duration: LEAVE_MS }, (finished) => {
+        if (finished) scheduleOnRN(onDecide, like)
+      }),
+    )
   }
 
-  useImperativeHandle(ref, () => ({ fly }))
+  // The buttons below the deck trigger the same animation.
+  useImperativeHandle(ref, () => ({ fly: (like: boolean) => scheduleOnUI(fly, like) }))
 
   const pan = usePanGesture({
+    enabled: isTop,
     // Horizontal drags move the card, vertical ones still scroll the screen.
     activeOffsetX: [-10, 10],
     onUpdate: (e) => {
       'worklet'
-      if (leaving.value) return
-      x.value = e.translationX
-      y.value = e.translationY
+      if (leaving.get()) return
+      x.set(e.translationX)
+      y.set(e.translationY)
       const past = Math.abs(e.translationX) > THRESHOLD
-      if (past !== pastThreshold.value) {
-        pastThreshold.value = past
-        if (past) scheduleOnRN(haptic.select)
+      if (past !== pastThreshold.get()) {
+        pastThreshold.set(past)
+        if (past) scheduleOnRN(crossed)
       }
     },
     onDeactivate: (e) => {
       'worklet'
-      pastThreshold.value = false
+      pastThreshold.set(false)
+      if (leaving.get()) return
       const flung = Math.abs(e.velocityX) > FLING_VELOCITY && Math.sign(e.velocityX) === Math.sign(e.translationX)
       if (Math.abs(e.translationX) > THRESHOLD || flung) {
         fly(e.translationX > 0)
       } else {
-        x.value = withSpring(0)
-        y.value = withSpring(0)
+        x.set(withSpring(0))
+        y.set(withSpring(0))
       }
     },
   })
 
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.value }, { translateY: y.value }, { rotate: `${x.value / 18}deg` }],
-  }))
-  const likeOpacity = useAnimatedReactionValue(x, 1)
-  const nopeOpacity = useAnimatedReactionValue(x, -1)
+  const style = useAnimatedStyle(() => {
+    if (isTop) {
+      return { zIndex: 2, opacity: 1, transform: [{ translateX: x.get() }, { translateY: y.get() }, { rotate: `${x.get() / 18}deg` }, { scale: 1 }] }
+    }
+    const p = progress(Math.abs(drag.get()))
+    return { zIndex: 1, opacity: 0.6 + p * 0.4, transform: [{ translateX: 0 }, { translateY: 0 }, { rotate: '0deg' }, { scale: 0.95 + p * 0.05 }] }
+  }, [isTop])
 
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View className="absolute inset-0" style={cardStyle}>
+      <Animated.View className="absolute inset-0" style={style}>
         <CardFace item={item} />
-        <Stamp label="WILL ICH" color={colors.like} side="left" opacity={likeOpacity} />
-        <Stamp label="NÖ" color={colors.destructive} side="right" opacity={nopeOpacity} />
+        {isTop && <Stamp label="WILL ICH" color={colors.like} side="left" x={x} />}
+        {isTop && <Stamp label="NÖ" color={colors.destructive} side="right" x={x} />}
       </Animated.View>
     </GestureDetector>
   )
 }
 
-/** Stamp opacity follows the drag distance in one direction. */
-function useAnimatedReactionValue(x: SharedValue<number>, direction: 1 | -1) {
-  const opacity = useSharedValue(0)
-  useAnimatedReaction(
-    () => clamp01(x.value * direction),
-    (value) => opacity.set(value),
-  )
-  return opacity
-}
-
-/** The card behind grows into place while the top card is dragged away. */
-function NextCard({ item, drag }: { item: DrawItem; drag: SharedValue<number> }) {
-  const style = useAnimatedStyle(() => {
-    const progress = clamp01(Math.abs(drag.value))
-    return { opacity: 0.6 + progress * 0.4, transform: [{ scale: 0.95 + progress * 0.05 }] }
-  })
-  return (
-    <Animated.View className="absolute inset-0" style={style}>
-      <CardFace item={item} />
-    </Animated.View>
-  )
-}
-
-/** Card size: whatever is left of the screen after header, progress and buttons, at a 2:3 poster ratio. */
+/** Whatever is left of the screen after header, progress and buttons, at the 2:3 poster ratio. */
 function useCardSize() {
   const { width, height } = useWindowDimensions()
   const insets = useSafeAreaInsets()
@@ -200,22 +199,30 @@ export function SwipeDeck({ items, onSwipe, onUndo, canUndo }: Props) {
   return (
     <View className="items-center gap-4">
       <View style={{ width: size.width, height: size.height }}>
-        {next && <NextCard key={next.key} item={next} drag={drag} />}
-        {top && <TopCard key={top.key} ref={card} item={top} width={size.screenWidth} drag={drag} onDecide={(like) => onSwipe(top, like)} />}
+        {[next, top].map(
+          (item) =>
+            item && (
+              <DeckCard
+                key={item.key}
+                ref={item === top ? card : undefined}
+                item={item}
+                isTop={item === top}
+                screenWidth={size.screenWidth}
+                drag={drag}
+                onDecide={(like) => onSwipe(item, like)}
+              />
+            ),
+        )}
       </View>
 
       <View className="flex-row items-center gap-5">
-        <Button
-          size="icon-lg"
-          variant="secondary"
-          icon={X}
-          haptics={false}
-          accessibilityLabel="Gerade nicht"
-          onPress={() => card.current?.fly(false)}
-          className="[&>*]:text-destructive"
-        />
+        <Button size="icon-lg" variant="secondary" haptics={false} accessibilityLabel="Gerade nicht" onPress={() => card.current?.fly(false)}>
+          <Icon as={X} color="destructive" size={26} />
+        </Button>
         <Button size="icon" variant="ghost" icon={Undo2} accessibilityLabel="Rückgängig" disabled={!canUndo} onPress={onUndo} className="rounded-full" />
-        <Button size="icon-lg" icon={Heart} haptics={false} accessibilityLabel="Will ich sehen" onPress={() => card.current?.fly(true)} />
+        <Button size="icon-lg" haptics={false} accessibilityLabel="Will ich sehen" onPress={() => card.current?.fly(true)}>
+          <Icon as={Heart} color="primaryForeground" fill={colors.primaryForeground} size={26} />
+        </Button>
       </View>
     </View>
   )
