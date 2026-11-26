@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { Page, PageHeader } from '@/components/AppShell'
+import { BurrowMark } from '@/components/BurrowMark'
 import { EmptyState } from '@/components/EmptyState'
 import { NameDialog } from '@/components/NameDialog'
 import { PosterCard, PosterGrid, PosterGridSkeleton } from '@/components/PosterCard'
@@ -38,7 +39,7 @@ export default function FolderDetail() {
   if (!folder) {
     return (
       <Page>
-        <EmptyState icon={FolderOpen} title="Ordner nicht gefunden">
+        <EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text="Den Ordner gibt es nicht mehr.">
           <Button asChild variant="secondary"><Link to="/folders">Zu den Ordnern</Link></Button>
         </EmptyState>
       </Page>

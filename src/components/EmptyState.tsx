@@ -1,7 +1,6 @@
-import type { LucideIcon } from 'lucide-react'
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
-type Props = { icon: LucideIcon; title: string; text?: ReactNode; children?: ReactNode }
+type Props = { icon: ComponentType<{ className?: string }>; title: string; text?: ReactNode; children?: ReactNode }
 
 export function EmptyState({ icon: Icon, title, text, children }: Props) {
   return (

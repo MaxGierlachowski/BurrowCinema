@@ -1,6 +1,7 @@
-import { Clapperboard, Film, FolderHeart, Search, Settings } from 'lucide-react'
+import { Film, FolderHeart, Search, Settings } from 'lucide-react'
 import { NavLink, Outlet, ScrollRestoration } from 'react-router'
 import { cn } from '@/lib/utils'
+import { BurrowMark } from './BurrowMark'
 
 const NAV = [
   { to: '/', label: 'Bibliothek', icon: Film },
@@ -13,7 +14,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn('flex items-center gap-2 font-semibold tracking-tight', className)}>
       <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-        <Clapperboard className="size-4.5" />
+        <BurrowMark className="size-5" />
       </span>
       BurrowCinema
     </span>

@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate } from 'react-router'
 import { Logo } from '@/components/AppShell'
+import { PeekingEars } from '@/components/BurrowMark'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -52,60 +53,63 @@ export default function Login() {
             'radial-gradient(140% 60% at 50% 0%, color-mix(in oklch, var(--primary) 18%, transparent) 0%, color-mix(in oklch, var(--primary) 6%, transparent) 45%, transparent 75%)',
         }}
       />
-      <div className="relative w-full max-w-sm space-y-6">
+      <div className="relative w-full max-w-sm space-y-14">
         <Logo className="justify-center text-xl" />
-        <Card>
-          <CardHeader>
-            <CardTitle>Anmelden</CardTitle>
-            <CardDescription>Mit deinem Jellyfin Account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={submit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="server">Server</Label>
-                <Input
-                  id="server"
-                  inputMode="url"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  placeholder="jellyfin.example.com"
-                  value={server}
-                  onChange={(e) => setServer(e.target.value)}
-                  required
-                  className="h-10"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="username">Benutzername</Label>
-                <Input
-                  id="username"
-                  autoCapitalize="none"
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="h-10"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Passwort</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-10"
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="animate-spin" />}
-                Anmelden
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="relative">
+          <PeekingEars className="absolute -top-12 right-10 h-16 w-12" />
+          <Card className="relative">
+            <CardHeader>
+              <CardTitle>Anmelden</CardTitle>
+              <CardDescription>Mit deinem Jellyfin Account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={submit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="server">Server</Label>
+                  <Input
+                    id="server"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    placeholder="jellyfin.example.com"
+                    value={server}
+                    onChange={(e) => setServer(e.target.value)}
+                    required
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Benutzername</Label>
+                  <Input
+                    id="username"
+                    autoCapitalize="none"
+                    autoComplete="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Passwort</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button type="submit" size="lg" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="animate-spin" />}
+                  Anmelden
+                </Button>
+              </form>
+              </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

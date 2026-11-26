@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, Film } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useParams } from 'react-router'
 import { AddToFolder } from '@/components/AddToFolder'
+import { BurrowMark } from '@/components/BurrowMark'
 import { DetailLayout, DetailSkeleton, Row } from '@/components/DetailLayout'
 import { EmptyState } from '@/components/EmptyState'
 import { Poster } from '@/components/PosterCard'
@@ -62,7 +63,7 @@ export default function ItemDetail() {
   const { data: item, isLoading, error } = useQuery({ queryKey: ['item', id], queryFn: () => getItem(session, id) })
 
   if (isLoading) return <DetailSkeleton />
-  if (!item) return <div className="p-4"><EmptyState icon={Film} title="Titel nicht gefunden" text={error?.message} /></div>
+  if (!item) return <div className="p-4"><EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text={error?.message ?? "Titel nicht gefunden"} /></div>
 
   const folderItem = fromJellyfin(session, item)
   const inFolders = folders.filter((f) => f.items.some((i) => i.key === folderItem.key))

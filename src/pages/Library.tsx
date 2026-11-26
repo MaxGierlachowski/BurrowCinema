@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { Film } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { Page, PageHeader } from '@/components/AppShell'
+import { BurrowMark } from '@/components/BurrowMark'
 import { EmptyState } from '@/components/EmptyState'
 import { LoadMore, PosterCard, PosterGrid, PosterGridSkeleton } from '@/components/PosterCard'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -68,8 +68,8 @@ export default function Library() {
       </PageHeader>
 
       {query.isLoading && <PosterGridSkeleton />}
-      {query.isError && <EmptyState icon={Film} title="Bibliothek konnte nicht geladen werden" text={query.error.message} />}
-      {query.isSuccess && items.length === 0 && <EmptyState icon={Film} title="Hier ist noch nichts" />}
+      {query.isError && <EmptyState icon={BurrowMark} title="Bibliothek konnte nicht geladen werden" text={query.error.message} />}
+      {query.isSuccess && items.length === 0 && <EmptyState icon={BurrowMark} title="Der Bau ist noch leer" />}
 
       <PosterGrid>
         {items.map((item) => (

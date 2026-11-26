@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Page } from '@/components/AppShell'
 import { ArrDialog, ConnectedIcon } from '@/components/ArrConnect'
+import { BurrowMark } from '@/components/BurrowMark'
 import { EmptyState } from '@/components/EmptyState'
 import { PosterCard, PosterGrid, PosterGridSkeleton } from '@/components/PosterCard'
 import { Badge } from '@/components/ui/badge'
@@ -102,7 +103,7 @@ export default function Search() {
       {!searching && (
         <div className="mt-8">
           <EmptyState
-            icon={SearchIcon}
+            icon={BurrowMark}
             title="Was möchtest du finden?"
             text={
               <>
