@@ -1,9 +1,8 @@
-name: Build server image
+name: Build Docker image
 
 on:
   push:
     branches: [main]
-    paths: [server/**]
   workflow_dispatch:
 
 permissions:
@@ -24,7 +23,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
-          context: server
+          context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/maxgierlachowski/burrowcinema-server:latest
+          tags: ghcr.io/maxgierlachowski/burrowcinema:latest

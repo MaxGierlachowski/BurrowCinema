@@ -1,66 +1,71 @@
 # BurrowCinema
 
-Ein schlanker, mobil optimierter Web Client für Jellyfin. Anmelden mit dem eigenen Jellyfin Account, Filme und Serien durchstöbern, Details ansehen und Titel in eigene Ordner sortieren. Über Radarr und Sonarr lassen sich auch Titel finden und einsortieren, die noch nicht heruntergeladen sind.
-
-Läuft komplett im Browser und wird automatisch über GitHub Pages gehostet.
+Ein schlanker, mobil optimierter Web Client für Jellyfin. Anmelden mit dem eigenen Jellyfin Account, Filme und Serien durchstöbern, Details ansehen, Titel in Ordner sortieren, fehlende Titel über Radarr und Sonarr anfragen und gemeinsam per Swipe auslosen, was geschaut wird.
 
 ## Funktionen
 * Login direkt gegen die Jellyfin API
-* Bibliothek mit Filmen und Serien, Sortierung und endlosem Scrollen
+* Bibliothek mit Filmen und Serien, Sortierung, Rating und endlosem Scrollen
 * Suche über Jellyfin, Radarr und Sonarr gleichzeitig
 * Detailseiten mit Backdrop, Infos, Staffeln und Besetzung
-* Ordner für eigene Sammlungen, auch mit Titeln, die noch fehlen
+* Ordner für eigene Sammlungen, auch mit Titeln, die noch fehlen. Sie liegen im Jellyfin Profil und sind auf allen Geräten gleich
 * Fehlende Filme und Serien direkt in Radarr bzw. Sonarr anfragen, mit Auswahl aus allen Qualitätsprofilen
-* Ordner werden im Jellyfin Profil gespeichert und sind auf allen Geräten gleich
 * Auslosung: gemeinsam mit anderen Jellyfin Benutzern durch Filme und Serien swipen und sehen, worauf alle Lust haben
 * Lässt sich auf dem Handy zum Home Bildschirm hinzufügen
 
-## Einrichtung
+## Deployment (empfohlen): ein Container für alles
 
-### 1. GitHub Pages aktivieren
-Im Repo unter **Settings, Pages** bei **Source** den Eintrag **GitHub Actions** wählen. Danach baut und veröffentlicht der Workflow die Seite bei jedem Push auf `main`. Die Adresse lautet dann `https://maxgierlachowski.github.io/BurrowCinema/`.
+Das `Dockerfile` im Hauptordner baut ein einziges Image mit der App **und** dem Server für die Auslosung. Beides läuft unter derselben Adresse, in der App muss deshalb keine Server Adresse eingetragen werden.
 
-GitHub Pages für private Repos braucht einen bezahlten GitHub Plan. Alternativ das Repo öffentlich machen, im Code liegen keine Zugangsdaten.
+### Mit einer Deploy Plattform (Dokploy, Coolify, CapRover, Railway …)
+1. Neuen Service bzw. neue Application anlegen und dieses GitHub Repo verbinden, Branch `main`.
+2. Als Build Methode **Dockerfile** wählen (Pfad `Dockerfile`, Kontext `.`). Alternativ kann die Plattform die `docker-compose.yml` nutzen.
+3. Umgebungsvariable setzen:
 
-### 2. Server erreichbar machen
-Weil die Seite per HTTPS ausgeliefert wird, blockiert der Browser Aufrufe an `http://` Adressen. Jellyfin, Radarr und Sonarr müssen deshalb über **HTTPS** erreichbar sein, zum Beispiel über einen Reverse Proxy, Tailscale Serve oder einen Cloudflare Tunnel. Alle drei erlauben API Aufrufe von fremden Seiten (CORS) bereits standardmäßig.
+   | Variable | Pflicht | Beispiel | Zweck |
+   |---|---|---|---|
+   | `JELLYFIN_URL` | ja | `http://jellyfin:8096` | Wie der Container Jellyfin erreicht. Darf eine interne Adresse sein |
+   | `ALLOWED_ORIGIN` | nein | `https://maxgierlachowski.github.io` | Nur nötig, wenn zusätzlich die GitHub Pages Version diesen Server nutzt |
 
-### 3. Radarr und Sonarr verbinden (optional)
-In der App unter **Einstellungen** Adresse und API Key eintragen. Den Key findet man in Radarr bzw. Sonarr unter **Settings, General, Security**. Die Keys bleiben nur im Browser des jeweiligen Geräts gespeichert.
+4. Persistenten Speicher (Volume) unter **`/data`** einhängen. Dort liegt die SQLite Datenbank der Auslosungen.
+5. Domain auf **Port `8787`** zeigen lassen, mit HTTPS.
+6. Deploy starten. Der Container meldet sich über einen eingebauten Healthcheck (`/api/health`) als gesund.
 
-### 4. Server für die Auslosung (optional)
-Die Auslosung braucht einen kleinen Server, der Auslosungen und Swipes für alle Teilnehmer speichert. Angemeldet wird weiterhin nur über Jellyfin: Der Server prüft den Jellyfin Login jeder Anfrage direkt bei Jellyfin und speichert weder Passwörter noch Tokens. Die Daten liegen in einer SQLite Datei.
-
-Das Docker Image wird bei jeder Änderung im Ordner `server/` automatisch gebaut und unter `ghcr.io/maxgierlachowski/burrowcinema-server` veröffentlicht. Beispiel für Docker Compose:
-
-```yaml
-services:
-  burrowcinema:
-    image: ghcr.io/maxgierlachowski/burrowcinema-server:latest
-    container_name: burrowcinema
-    restart: unless-stopped
-    environment:
-      JELLYFIN_URL: http://jellyfin:8096            # wie der Server Jellyfin erreicht, gern intern
-      ALLOWED_ORIGIN: https://maxgierlachowski.github.io
-    volumes:
-      - ./burrowcinema:/data
-    ports:
-      - 8787:8787
+### Mit Docker Compose
+```bash
+cp .env.example .env        # JELLYFIN_URL eintragen
+docker compose up -d --build
 ```
+Die App läuft dann auf Port 8787 und muss noch per Reverse Proxy mit HTTPS erreichbar gemacht werden.
 
-Danach den Port 8787 wie Jellyfin per HTTPS erreichbar machen und die Adresse in der App unter **Einstellungen, Auslosung** eintragen.
+### Fertiges Image
+Bei jedem Push auf `main` wird das Image zusätzlich unter `ghcr.io/maxgierlachowski/burrowcinema:latest` veröffentlicht (für amd64 und arm64). Ist das Repo privat, ist auch das Image privat und braucht vorher `docker login ghcr.io`.
 
-Ist das Repo privat, ist auch das Image privat. Dann vorher `docker login ghcr.io` mit einem GitHub Token (Berechtigung `read:packages`) ausführen, oder das Image direkt bauen: `docker build -t burrowcinema-server ./server`.
+## Wichtig: HTTPS für Jellyfin, Radarr und Sonarr
+Die App spricht Jellyfin, Radarr und Sonarr direkt aus dem Browser an. Weil die App per HTTPS läuft, blockiert der Browser Aufrufe an `http://` Adressen. Alle drei müssen deshalb im Browser per **HTTPS** erreichbar sein, zum Beispiel über denselben Reverse Proxy. Ihre CORS Einstellungen erlauben das bereits standardmäßig.
+
+Radarr und Sonarr werden in der App unter **Einstellungen** verbunden. Den API Key findet man dort jeweils unter **Settings, General, Security**. Die Keys bleiben nur im Browser des jeweiligen Geräts.
+
+## Wo welche Daten liegen
+| Daten | Ort |
+|---|---|
+| Ordner | Im Jellyfin Profil des Benutzers, plus Zwischenspeicher im Browser |
+| Login, Radarr und Sonarr Zugangsdaten | Nur im Browser des jeweiligen Geräts |
+| Auslosungen und Swipes | SQLite Datei im Container unter `/data` |
+
+Der Server speichert keine Passwörter und keine Tokens. Er prüft bei jeder Anfrage den Jellyfin Login direkt bei Jellyfin.
+
+## Alternative: GitHub Pages
+Ohne eigenen Container läuft die App auch unter `https://maxgierlachowski.github.io/BurrowCinema/` (Workflow `deploy.yml`, Pages Source „GitHub Actions“). Die Auslosung braucht dann trotzdem den Container, dessen Adresse in der App unter **Einstellungen, Auslosung** eingetragen wird.
 
 ## Entwicklung
 ```bash
 npm install
-npm run dev      # lokaler Server auf http://localhost:5173
+npm run dev      # App auf http://localhost:5173
 npm run build    # statischer Build nach dist/
 
-# Server lokal starten (Node 22.18 oder neuer)
+# Server lokal (Node 22.18 oder neuer)
 cd server && npm install
 JELLYFIN_URL=https://jellyfin.example.com ALLOWED_ORIGIN=http://localhost:5173 npm start
 ```
 
-Technik: Vite, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router. Details zur Planung stehen in [PLAN.md](PLAN.md).
+Technik: Vite, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router. Server: Node, Hono, SQLite. Planung in [PLAN.md](PLAN.md) und [docs/auslosung-plan.md](docs/auslosung-plan.md).

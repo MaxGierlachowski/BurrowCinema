@@ -1,0 +1,16 @@
+services:
+  burrowcinema:
+    build: .
+    restart: unless-stopped
+    environment:
+      # How the container reaches Jellyfin. Can be an internal address, e.g. http://jellyfin:8096
+      JELLYFIN_URL: ${JELLYFIN_URL:?Bitte JELLYFIN_URL setzen}
+      # Only needed if you also use the GitHub Pages version with this server
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-https://maxgierlachowski.github.io}
+    volumes:
+      - burrowcinema-data:/data
+    ports:
+      - "${PORT:-8787}:8787"
+
+volumes:
+  burrowcinema-data:

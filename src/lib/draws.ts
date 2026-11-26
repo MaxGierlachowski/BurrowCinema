@@ -44,7 +44,10 @@ export type NewDraw = {
 
 const SERVER_KEY = 'bc.drawServer'
 
-export const getDrawServer = () => load<string>(SERVER_KEY, '')
+// The all in one Docker image serves the app and the API from the same address.
+const BUNDLED = import.meta.env.VITE_SAME_ORIGIN_API === 'true'
+
+export const getDrawServer = () => load<string>(SERVER_KEY, '') || (BUNDLED ? location.origin : '')
 export const setDrawServer = (url: string | null) => save(SERVER_KEY, url ? normalizeUrl(url) : null)
 
 export async function testDrawServer(url: string) {

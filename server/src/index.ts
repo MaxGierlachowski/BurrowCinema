@@ -1,5 +1,7 @@
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
@@ -8,6 +10,7 @@ import { db, transaction } from './db.ts'
 const JELLYFIN_URL = (process.env.JELLYFIN_URL ?? '').replace(/\/+$/, '')
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN ?? 'https://maxgierlachowski.github.io').split(',')
 const PORT = Number(process.env.PORT ?? 8787)
+const PUBLIC_DIR = process.env.PUBLIC_DIR ?? './public'
 
 if (!JELLYFIN_URL) throw new Error('JELLYFIN_URL is required')
 
@@ -210,10 +213,23 @@ app.get('/api/stats', (c) => {
   return c.json(rows)
 })
 
+// In the all in one image the built web app sits next to the API, so both share one address.
+if (existsSync(PUBLIC_DIR)) {
+  app.use(
+    '/*',
+    serveStatic({
+      root: PUBLIC_DIR,
+      onFound: (path, c) => {
+        c.header('Cache-Control', path.endsWith('.html') ? 'no-cache' : 'public, max-age=31536000, immutable')
+      },
+    }),
+  )
+}
+
 app.onError((err, c) => {
   if (err instanceof HTTPException) return c.json({ message: err.message }, err.status)
   console.error(err)
   return c.json({ message: 'Interner Fehler' }, 500)
 })
 
-serve({ fetch: app.fetch, port: PORT }, () => console.log(`BurrowCinema server on :${PORT}, Jellyfin at ${JELLYFIN_URL}`))
+serve({ fetch: app.fetch, port: PORT }, () => console.log(`BurrowCinema on :${PORT}, Jellyfin at ${JELLYFIN_URL}`))
