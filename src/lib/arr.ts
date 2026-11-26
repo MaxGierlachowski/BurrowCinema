@@ -52,10 +52,17 @@ export function setArrConfig(kind: ArrKind, config: ArrConfig | null) {
   save(SETTINGS_KEY, settings)
 }
 
-async function arrFetch<T>(config: ArrConfig, path: string): Promise<T> {
-  const res = await fetch(`${config.url}/api/v3${path}`, { headers: { 'X-Api-Key': config.apiKey } })
+async function arrFetch<T>(config: ArrConfig, path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${config.url}/api/v3${path}`, {
+    ...init,
+    headers: { 'X-Api-Key': config.apiKey, 'Content-Type': 'application/json' },
+  })
   if (res.status === 401) throw new Error('API Key ungültig')
-  if (!res.ok) throw new Error(`Fehler ${res.status}`)
+  if (!res.ok) {
+    // Validation errors come back as [{ errorMessage }], e.g. when a title was already added.
+    const body = await res.json().catch(() => null)
+    throw new Error(body?.[0]?.errorMessage ?? body?.message ?? `Fehler ${res.status}`)
+  }
   return res.json()
 }
 
@@ -101,10 +108,44 @@ export async function searchArr(kind: ArrKind, term: string) {
   return results.map((raw) => toItem(kind, raw))
 }
 
-export async function getArrItem(kind: ArrKind, id: string) {
-  const config = requireConfig(kind)
-  if (kind === 'radarr') return toItem(kind, await arrFetch<ArrRaw>(config, `/movie/lookup/tmdb?tmdbId=${id}`))
+async function lookup(config: ArrConfig, kind: ArrKind, id: string) {
+  if (kind === 'radarr') return arrFetch<ArrRaw>(config, `/movie/lookup/tmdb?tmdbId=${id}`)
   const [series] = await arrFetch<ArrRaw[]>(config, `/series/lookup?term=tvdb:${id}`)
   if (!series) throw new Error('Serie nicht gefunden')
-  return toItem(kind, series)
+  return series
+}
+
+export async function getArrItem(kind: ArrKind, id: string) {
+  return toItem(kind, await lookup(requireConfig(kind), kind, id))
+}
+
+export type QualityProfile = { id: number; name: string }
+export type RootFolder = { id: number; path: string; freeSpace?: number }
+export type RequestOptions = { qualityProfileId: number; rootFolderPath: string }
+
+export async function getRequestOptions(kind: ArrKind) {
+  const config = requireConfig(kind)
+  const [profiles, folders] = await Promise.all([
+    arrFetch<QualityProfile[]>(config, '/qualityprofile'),
+    arrFetch<RootFolder[]>(config, '/rootfolder'),
+  ])
+  return { profiles, folders }
+}
+
+/** Adds the title to Radarr/Sonarr, monitored, and starts the search right away. */
+export async function requestArr(kind: ArrKind, id: string, options: RequestOptions) {
+  const config = requireConfig(kind)
+  const raw = await lookup(config, kind, id)
+  const body =
+    kind === 'radarr'
+      ? { ...raw, ...options, monitored: true, minimumAvailability: 'released', addOptions: { searchForMovie: true } }
+      : {
+          ...raw,
+          ...options,
+          languageProfileId: 1, // only read by Sonarr v3, ignored by v4
+          monitored: true,
+          seasonFolder: true,
+          addOptions: { monitor: 'all', searchForMissingEpisodes: true },
+        }
+  await arrFetch(config, kind === 'radarr' ? '/movie' : '/series', { method: 'POST', body: JSON.stringify(body) })
 }

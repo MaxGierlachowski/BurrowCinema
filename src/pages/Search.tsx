@@ -58,7 +58,7 @@ function ArrResults({ kind, term, knownIds }: { kind: ArrKind; term: string; kno
           <PosterCard
             key={item.id}
             item={fromArr(item)}
-            badge={<Badge variant="secondary" className="bg-black/70 backdrop-blur">{item.inArr ? `In ${ARR_LABEL[kind]}` : 'Nicht geladen'}</Badge>}
+            badge={<Badge variant="secondary" className="bg-black/70 backdrop-blur">{item.inArr ? 'Angefragt' : 'Nicht geladen'}</Badge>}
           />
         ))}
       </PosterGrid>

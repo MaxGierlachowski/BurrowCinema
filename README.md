@@ -10,6 +10,7 @@ Läuft komplett im Browser und wird automatisch über GitHub Pages gehostet.
 * Suche über Jellyfin, Radarr und Sonarr gleichzeitig
 * Detailseiten mit Backdrop, Infos, Staffeln und Besetzung
 * Ordner für eigene Sammlungen, auch mit Titeln, die noch fehlen
+* Fehlende Filme und Serien direkt in Radarr bzw. Sonarr anfragen, mit Auswahl aus allen Qualitätsprofilen
 * Ordner werden im Jellyfin Profil gespeichert und sind auf allen Geräten gleich
 * Lässt sich auf dem Handy zum Home Bildschirm hinzufügen
 

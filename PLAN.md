@@ -14,7 +14,8 @@ Ein kleiner, mobil optimierter Web Client, der direkt mit der Jellyfin API spric
 | F5 | Ordner | Ordner anlegen, umbenennen, löschen. Filme und Serien hinzufügen und entfernen, egal ob aus Jellyfin, Radarr oder Sonarr. |
 | F6 | Ordner Sync | Ordner werden in den Jellyfin DisplayPreferences des Users gespeichert (`CustomPrefs`). Dadurch sind sie auf jedem Gerät gleich, auf dem man sich mit demselben Account anmeldet. `localStorage` dient als Cache. |
 | F7 | Radarr und Sonarr Anbindung | In den Einstellungen URL und API Key eintragen, mit „Verbindung testen“. Genutzt wird nur die Suche (`/api/v3/movie/lookup`, `/api/v3/series/lookup`). |
-| F8 | Nicht im Umfang | Abspielen, Downloads über Radarr oder Sonarr anstoßen. |
+| F8 | Anfragen | Fehlende Titel über `POST /api/v3/movie` bzw. `/series` hinzufügen. Alle Qualitätsprofile (`/qualityprofile`) und Speicherorte (`/rootfolder`) werden geladen und sind auswählbar, die letzte Wahl wird gemerkt. Der Titel wird überwacht und sofort gesucht. |
+| F9 | Nicht im Umfang | Abspielen. |
 
 ### Nicht funktional
 * Mobile first, Bottom Navigation auf dem Handy, Top Navigation ab Tablet Breite.

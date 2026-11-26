@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router'
 import { AddToFolder } from '@/components/AddToFolder'
 import { DetailLayout, DetailSkeleton } from '@/components/DetailLayout'
 import { EmptyState } from '@/components/EmptyState'
+import { RequestButton } from '@/components/RequestButton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useFolders } from '@/hooks/useFolders'
@@ -52,7 +53,7 @@ export default function ExternalDetail() {
       badges={
         <>
           <Badge variant="destructive">Nicht in Jellyfin</Badge>
-          <Badge variant="outline">{item.inArr ? `In ${ARR_LABEL[source]} vorgemerkt` : `Noch nicht in ${ARR_LABEL[source]}`}</Badge>
+          <Badge variant="outline">{item.inArr ? `In ${ARR_LABEL[source]} angefragt` : `Noch nicht in ${ARR_LABEL[source]}`}</Badge>
           {inFolders.map((f) => (
             <Badge key={f.id} variant="secondary">{f.name}</Badge>
           ))}
@@ -60,7 +61,8 @@ export default function ExternalDetail() {
       }
       actions={
         <>
-          <AddToFolder item={folderItem} />
+          <RequestButton item={item} />
+          <AddToFolder item={folderItem} variant="secondary" />
           {item.imdbId && (
             <Button asChild size="lg" variant="secondary">
               <a href={`https://www.imdb.com/title/${item.imdbId}`} target="_blank" rel="noreferrer">

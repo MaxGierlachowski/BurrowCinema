@@ -16,7 +16,7 @@ import type { FolderItem } from '@/lib/folders'
 import { plural } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-export function AddToFolder({ item }: { item: FolderItem }) {
+export function AddToFolder({ item, variant = 'default' }: { item: FolderItem; variant?: 'default' | 'secondary' }) {
   const { folders, create, toggleItem } = useFolders()
   const [name, setName] = useState('')
   const count = folders.filter((f) => f.items.some((i) => i.key === item.key)).length
@@ -32,7 +32,7 @@ export function AddToFolder({ item }: { item: FolderItem }) {
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button size="lg">
+        <Button size="lg" variant={variant}>
           {count ? <Check /> : <FolderPlus />}
           {count ? `In ${plural(count, 'Ordner', 'Ordnern')}` : 'Zu Ordner hinzufügen'}
         </Button>
