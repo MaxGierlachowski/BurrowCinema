@@ -44,7 +44,7 @@ function deviceId() {
   return id
 }
 
-function authHeader(token?: string) {
+export function authHeader(token?: string) {
   const parts = [`Client="${CLIENT}"`, `Device="Web Browser"`, `DeviceId="${deviceId()}"`, `Version="1.0.0"`]
   if (token) parts.push(`Token="${token}"`)
   return `MediaBrowser ${parts.join(', ')}`
@@ -108,6 +108,27 @@ export async function getSeasons(s: Session, seriesId: string) {
   const params = new URLSearchParams({ userId: s.userId, Fields: 'ChildCount' })
   const { Items } = await request<ItemsResponse>(s, `/Shows/${seriesId}/Seasons?${params}`)
   return Items
+}
+
+export type JellyfinUser = { Id: string; Name: string; PrimaryImageTag?: string }
+
+export async function getUsers(s: Session) {
+  // Older servers only allow admins to list everyone; fall back to the users shown on the login screen.
+  const users = await request<JellyfinUser[]>(s, '/Users').catch(() => request<JellyfinUser[]>(s, '/Users/Public'))
+  return users.filter((u) => u.Id !== s.userId)
+}
+
+export function userImageUrl(s: Session, user: JellyfinUser) {
+  return user.PrimaryImageTag ? `${s.server}/Users/${user.Id}/Images/Primary?maxWidth=96&quality=85` : undefined
+}
+
+export async function getAllItems(s: Session, type: string) {
+  const items: BaseItem[] = []
+  for (let start = 0; ; start += 500) {
+    const page = await getItems(s, { type, start, limit: 500 })
+    items.push(...page.Items)
+    if (items.length >= page.TotalRecordCount || page.Items.length === 0) return items
+  }
 }
 
 export function imageUrl(s: Session, id: string, type: 'Primary' | 'Backdrop' | 'Logo', width = 400) {

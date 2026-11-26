@@ -5,12 +5,16 @@ import { createHashRouter, Navigate, RouterProvider } from 'react-router'
 import { AppShell } from '@/components/AppShell'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import DrawDetail from '@/pages/DrawDetail'
+import Draws from '@/pages/Draws'
+import DrawStats from '@/pages/DrawStats'
 import ExternalDetail from '@/pages/ExternalDetail'
 import FolderDetail from '@/pages/FolderDetail'
 import Folders from '@/pages/Folders'
 import ItemDetail from '@/pages/ItemDetail'
 import Library from '@/pages/Library'
 import Login from '@/pages/Login'
+import NewDraw from '@/pages/NewDraw'
 import Search from '@/pages/Search'
 import Settings from '@/pages/Settings'
 import './index.css'
@@ -33,6 +37,10 @@ const router = createHashRouter([
       { path: 'search', element: <Search /> },
       { path: 'item/:id', element: <ItemDetail /> },
       { path: 'external/:source/:id', element: <ExternalDetail /> },
+      { path: 'draws', element: <Draws /> },
+      { path: 'draws/new', element: <NewDraw /> },
+      { path: 'draws/stats', element: <DrawStats /> },
+      { path: 'draws/:id', element: <DrawDetail /> },
       { path: 'folders', element: <Folders /> },
       { path: 'folders/:id', element: <FolderDetail /> },
       { path: 'settings', element: <Settings /> },

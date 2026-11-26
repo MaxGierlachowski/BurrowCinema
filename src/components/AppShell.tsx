@@ -1,4 +1,4 @@
-import { Film, FolderHeart, Search, Settings } from 'lucide-react'
+import { Dices, Film, FolderHeart, Search, Settings } from 'lucide-react'
 import { NavLink, Outlet, ScrollRestoration } from 'react-router'
 import { cn } from '@/lib/utils'
 import { BurrowMark } from './BurrowMark'
@@ -6,6 +6,7 @@ import { BurrowMark } from './BurrowMark'
 const NAV = [
   { to: '/', label: 'Bibliothek', icon: Film },
   { to: '/search', label: 'Suche', icon: Search },
+  { to: '/draws', label: 'Auslosung', icon: Dices },
   { to: '/folders', label: 'Ordner', icon: FolderHeart },
   { to: '/settings', label: 'Einstellungen', icon: Settings },
 ]
@@ -55,7 +56,7 @@ export function AppShell() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
