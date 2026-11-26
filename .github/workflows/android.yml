@@ -1,0 +1,77 @@
+name: Android APK
+
+# Builds the Expo app into an installable APK without an Expo account.
+# Every change to app/ or shared/ on main produces an APK artifact.
+# Pushing a tag (for example 001) also publishes a GitHub release with the APK attached.
+
+on:
+  push:
+    branches: [main]
+    paths: [app/**, shared/**, .github/workflows/android.yml]
+    tags: ['[0-9]*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK
+        working-directory: app/android
+        # Modern phones are arm64; building only that ABI keeps the APK small and the build fast.
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - name: Name the APK
+        run: |
+          version=${{ github.ref_type == 'tag' && github.ref_name || format('main-{0}', github.run_number) }}
+          cp android/app/build/outputs/apk/release/app-release.apk "../BurrowCinema-$version.apk"
+          ls -lh ../BurrowCinema-*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BurrowCinema-apk
+          path: BurrowCinema-*.apk
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: BurrowCinema ${{ github.ref_name }}
+          files: BurrowCinema-*.apk
+          body: |
+            Android App zum direkten Installieren.
+
+            1. `BurrowCinema-${{ github.ref_name }}.apk` unten herunterladen und auf dem Handy öffnen.
+            2. Falls nachgefragt, die Installation aus dieser Quelle erlauben.
+            3. In der App mit dem Jellyfin Account anmelden. Radarr, Sonarr und der Auslosung Server kommen automatisch aus dem Jellyfin Profil.
+
+            Für Android Geräte mit 64 Bit ARM Prozessor (praktisch alle aktuellen Handys).

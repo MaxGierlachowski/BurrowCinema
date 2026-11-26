@@ -40,6 +40,11 @@ Die App läuft dann auf Port 8787 und muss noch per Reverse Proxy mit HTTPS erre
 ### Fertiges Image
 Bei jedem Push auf `main` wird das Image zusätzlich unter `ghcr.io/maxgierlachowski/burrowcinema:latest` veröffentlicht (für amd64 und arm64). Ist das Repo privat, ist auch das Image privat und braucht vorher `docker login ghcr.io`.
 
+## Android App
+Im Ordner `app/` liegt eine native App (Expo), die genauso aussieht und funktioniert wie die Web App und dieselbe Logik aus `shared/` nutzt. Dazu kommen native Extras: Haptik, Benachrichtigungen zu Auslosungen, Hintergrundprüfung auf neue Einladungen, Offline Cache und HTTP Zugriff im Heimnetz.
+
+Das APK zum Installieren liegt bei den [Releases](https://github.com/MaxGierlachowski/BurrowCinema/releases). Der Workflow `android.yml` baut es bei jeder Änderung an `app/` oder `shared/` und veröffentlicht es bei jedem Tag wie `001` als Release. Details in [app/README.md](app/README.md) und [docs/expo-plan.md](docs/expo-plan.md).
+
 ## Wichtig: HTTPS für Jellyfin, Radarr und Sonarr
 Die App spricht Jellyfin, Radarr und Sonarr direkt aus dem Browser an. Weil die App per HTTPS läuft, blockiert der Browser Aufrufe an `http://` Adressen. Alle drei müssen deshalb im Browser per **HTTPS** erreichbar sein, zum Beispiel über denselben Reverse Proxy. Ihre CORS Einstellungen erlauben das bereits standardmäßig.
 
@@ -69,4 +74,4 @@ cd server && npm install
 JELLYFIN_URL=https://jellyfin.example.com ALLOWED_ORIGIN=http://localhost:5173 npm start
 ```
 
-Technik: Vite, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router. Server: Node, Hono, SQLite. Planung in [PLAN.md](PLAN.md) und [docs/auslosung-plan.md](docs/auslosung-plan.md).
+Technik: Vite, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, React Router. App: Expo, Expo Router, Uniwind, FlashList, Reanimated. Server: Node, Hono, SQLite. Gemeinsame Logik in `shared/`. Planung in [PLAN.md](PLAN.md) und [docs/auslosung-plan.md](docs/auslosung-plan.md).
