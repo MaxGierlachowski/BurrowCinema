@@ -4,6 +4,7 @@ import '../global.css'
 import { useQuery } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { Stack, type ErrorBoundaryProps } from 'expo-router'
+import * as ScreenOrientation from 'expo-screen-orientation'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
@@ -17,10 +18,13 @@ import { syncSettings } from '@shared/userSettings'
 import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
 import { persistOptions, queryClient } from '@/lib/queryClient'
+import { isTV } from '@/lib/tv'
 // Auslosung: defines the background task at module level, registers it and opens tapped notifications.
 import { useDrawNotifications } from '@/lib/backgroundTask'
 
 SplashScreen.preventAutoHideAsync()
+// Phones stay upright (the player switches to landscape itself); TVs are never locked.
+if (!isTV) ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => undefined)
 
 /** Errors while rendering a screen show a message with retry instead of closing the app. */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
@@ -52,7 +56,7 @@ function RootNavigator() {
     staleTime: Infinity,
   })
   const ready = !session || !settings.isPending
-  useDrawNotifications(ready && !!session) // Auslosung notifications
+  useDrawNotifications(ready && !!session && !isTV) // Auslosung notifications, not on TV
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync()
@@ -65,6 +69,13 @@ function RootNavigator() {
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
         <Stack.Screen name="item/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="season/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="person/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="library/[type]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen
+          name="player/[id]"
+          options={{ animation: 'fade', gestureEnabled: false, statusBarHidden: true, navigationBarHidden: true }}
+        />
         <Stack.Screen name="external/[source]/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="folders/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="draws/new" />

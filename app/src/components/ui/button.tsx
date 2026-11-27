@@ -1,14 +1,16 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { LucideIcon } from 'lucide-react-native'
 import type { ReactNode } from 'react'
-import { ActivityIndicator, Pressable, type PressableProps } from 'react-native'
+import { ActivityIndicator } from 'react-native'
 import { colors } from '@shared/theme'
 import { haptic } from '@/lib/haptics'
+import { Focusable, type FocusableProps } from '@/lib/tv'
 import { cn } from '@/lib/utils'
 import { Icon, type IconColor } from './icon'
 import { Text } from './text'
 
-const buttonVariants = cva('flex-row items-center justify-center gap-2 rounded-xl active:opacity-80', {
+// Focusable adds the press feedback on phones and the focus ring on TV.
+const buttonVariants = cva('flex-row items-center justify-center gap-2 rounded-xl', {
   variants: {
     variant: {
       default: 'bg-primary',
@@ -37,7 +39,7 @@ const textColor: Record<string, IconColor> = {
   destructive: 'destructive',
 }
 
-type Props = Omit<PressableProps, 'children'> &
+type Props = Omit<FocusableProps, 'children'> &
   VariantProps<typeof buttonVariants> & {
     className?: string
     icon?: LucideIcon
@@ -50,7 +52,7 @@ type Props = Omit<PressableProps, 'children'> &
 export function Button({ variant, size, className, icon, loading, children, haptics = true, disabled, onPress, ...props }: Props) {
   const color = textColor[variant ?? 'default']
   return (
-    <Pressable
+    <Focusable
       accessibilityRole="button"
       disabled={disabled || loading}
       onPress={(e) => {
@@ -68,6 +70,6 @@ export function Button({ variant, size, className, icon, loading, children, hapt
       ) : (
         children
       )}
-    </Pressable>
+    </Focusable>
   )
 }

@@ -22,7 +22,10 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 
   const isPackage = !moduleName.startsWith('.') && !path.isAbsolute(moduleName)
   const fromShared = context.originModulePath.startsWith(sharedDir)
-  const ctx = isPackage && fromShared ? { ...context, originModulePath: path.join(__dirname, 'package.json') } : context
+  // react-native is react-native-tvos (npm alias). npm can nest a plain react-native copy below it for a peer
+  // dependency; resolving it from the app keeps exactly one react-native in the bundle.
+  const isReactNative = moduleName === 'react-native' || moduleName.startsWith('react-native/')
+  const ctx = isPackage && (fromShared || isReactNative) ? { ...context, originModulePath: path.join(__dirname, 'package.json') } : context
   return resolve(ctx, moduleName, platform)
 }
 

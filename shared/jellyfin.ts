@@ -23,7 +23,122 @@ export type BaseItem = {
   ImageTags?: Record<string, string>
   BackdropImageTags?: string[]
   ProviderIds?: Record<string, string>
+  UserData?: UserData
+  SeriesId?: string
+  SeriesName?: string
+  SeasonId?: string
+  SeasonName?: string
+  IndexNumber?: number
+  ParentIndexNumber?: number
+  PremiereDate?: string
+  SeriesPrimaryImageTag?: string
+  ParentBackdropItemId?: string
+  ParentBackdropImageTags?: string[]
+  ParentThumbItemId?: string
+  ParentThumbImageTag?: string
+  ParentLogoItemId?: string
+  ParentLogoImageTag?: string
+  CollectionType?: string
+  MediaType?: string
+  LocationType?: string
+  PrimaryImageAspectRatio?: number
+  MediaSources?: MediaSourceInfo[]
+  Chapters?: ChapterInfo[]
+  /** Per media source id, then per width. */
+  Trickplay?: Record<string, Record<string, TrickplayInfo>>
+  RemoteTrailers?: { Url: string; Name?: string }[]
 }
+
+export type UserData = {
+  PlaybackPositionTicks?: number
+  PlayedPercentage?: number
+  Played?: boolean
+  PlayCount?: number
+  IsFavorite?: boolean
+  LastPlayedDate?: string
+  UnplayedItemCount?: number
+}
+
+export type MediaStreamType = 'Video' | 'Audio' | 'Subtitle' | 'EmbeddedImage' | 'Data' | 'Lyric'
+export type SubtitleDeliveryMethod = 'Encode' | 'Embed' | 'External' | 'Hls' | 'Drop'
+
+export type MediaStream = {
+  Index: number
+  Type: MediaStreamType
+  Codec?: string
+  Language?: string
+  Title?: string
+  DisplayTitle?: string
+  IsDefault?: boolean
+  IsForced?: boolean
+  IsExternal?: boolean
+  IsTextSubtitleStream?: boolean
+  SupportsExternalStream?: boolean
+  DeliveryMethod?: SubtitleDeliveryMethod
+  DeliveryUrl?: string
+  IsExternalUrl?: boolean
+  Width?: number
+  Height?: number
+  BitRate?: number
+  Channels?: number
+  ChannelLayout?: string
+  VideoRange?: string
+  VideoRangeType?: string
+  RealFrameRate?: number
+  Profile?: string
+}
+
+export type MediaSourceInfo = {
+  Id: string
+  Name?: string
+  Path?: string
+  Protocol?: string
+  IsRemote?: boolean
+  Container?: string
+  Size?: number
+  Bitrate?: number
+  RunTimeTicks?: number
+  ETag?: string
+  SupportsDirectPlay?: boolean
+  SupportsDirectStream?: boolean
+  SupportsTranscoding?: boolean
+  TranscodingUrl?: string
+  TranscodingSubProtocol?: string
+  TranscodingContainer?: string
+  RequiredHttpHeaders?: Record<string, string>
+  MediaStreams?: MediaStream[]
+  DefaultAudioStreamIndex?: number
+  DefaultSubtitleStreamIndex?: number
+  HasSegments?: boolean
+}
+
+export type ChapterInfo = { StartPositionTicks: number; Name?: string; ImageTag?: string }
+
+export type TrickplayInfo = {
+  Width: number
+  Height: number
+  TileWidth: number
+  TileHeight: number
+  ThumbnailCount: number
+  Interval: number
+  Bandwidth?: number
+}
+
+export type UserView = BaseItem & { CollectionType?: string }
+
+export type UserConfiguration = {
+  AudioLanguagePreference?: string
+  PlayDefaultAudioTrack?: boolean
+  SubtitleLanguagePreference?: string
+  SubtitleMode?: 'Default' | 'Always' | 'OnlyForced' | 'None' | 'Smart'
+  EnableNextEpisodeAutoPlay?: boolean
+  RememberAudioSelections?: boolean
+  RememberSubtitleSelections?: boolean
+}
+
+export type Me = { Id: string; Name: string; Configuration?: UserConfiguration }
+
+export type ItemFilter = 'IsPlayed' | 'IsUnplayed' | 'IsResumable' | 'IsFavorite'
 
 type ItemsResponse = { Items: BaseItem[]; TotalRecordCount: number }
 type DisplayPreferences = { CustomPrefs?: Record<string, string | null> }
@@ -34,9 +149,10 @@ export type SortKey = 'DateCreated' | 'SortName' | 'ProductionYear' | 'Community
 const CLIENT = 'BurrowCinema'
 const PAGE_SIZE = 60
 const LIST_FIELDS = 'ProductionYear,ProviderIds,Genres'
-const DETAIL_FIELDS = 'Overview,Genres,People,Studios,Taglines,ProviderIds,ChildCount'
+const DETAIL_FIELDS = 'Overview,Genres,People,Studios,Taglines,ProviderIds,ChildCount,MediaSources,RemoteTrailers'
+const PLAYBACK_FIELDS = `${DETAIL_FIELDS},MediaStreams,Chapters,Trickplay`
 
-function deviceId() {
+export function deviceId() {
   let id = load('bc.deviceId', '')
   if (!id) {
     id = uuid()
@@ -51,16 +167,25 @@ export function authHeader(token?: string) {
   return `MediaBrowser ${parts.join(', ')}`
 }
 
-async function request<T>(s: Session, path: string, init: RequestInit = {}): Promise<T> {
+/** Error for a failed Jellyfin request; `status` lets callers treat e.g. 404 as "nothing there". */
+export class JellyfinError extends Error {
+  status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
+export async function request<T>(s: Session, path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(s.server + path, {
     ...init,
     headers: { 'Content-Type': 'application/json', Authorization: authHeader(s.token) },
   })
   if (res.status === 401) {
     emitUnauthorized()
-    throw new Error('Sitzung abgelaufen, bitte neu anmelden')
+    throw new JellyfinError(401, 'Sitzung abgelaufen, bitte neu anmelden')
   }
-  if (!res.ok) throw new Error(`Jellyfin antwortet mit ${res.status}`)
+  if (!res.ok) throw new JellyfinError(res.status, `Jellyfin antwortet mit ${res.status}`)
   return res.status === 204 ? (undefined as T) : res.json()
 }
 
@@ -73,7 +198,11 @@ export async function login(serverInput: string, username: string, password: str
   })
   if (res.status === 401) throw new Error('Benutzername oder Passwort ist falsch')
   if (!res.ok) throw new Error(`Login fehlgeschlagen (${res.status})`)
-  const data = await res.json()
+  return sessionFromAuth(server, await res.json())
+}
+
+/** Turns an authentication response (password or Quick Connect) into a session. */
+export function sessionFromAuth(server: string, data: { AccessToken: string; User: { Id: string; Name: string } }): Session {
   return { server, token: data.AccessToken, userId: data.User.Id, userName: data.User.Name }
 }
 
@@ -81,7 +210,19 @@ export function logout(s: Session) {
   return request(s, '/Sessions/Logout', { method: 'POST' }).catch(() => undefined)
 }
 
-export function getItems(s: Session, opts: { type: string; sort?: SortKey; start?: number; search?: string; limit?: number }) {
+export function getItems(
+  s: Session,
+  opts: {
+    type: string
+    sort?: SortKey
+    start?: number
+    search?: string
+    limit?: number
+    parentId?: string
+    filters?: ItemFilter
+    personIds?: string
+  },
+) {
   const sort = opts.sort ?? 'SortName'
   const params = query({
     userId: s.userId,
@@ -94,16 +235,24 @@ export function getItems(s: Session, opts: { type: string; sort?: SortKey; start
     Fields: LIST_FIELDS,
     ImageTypeLimit: 1,
     SearchTerm: opts.search,
+    ParentId: opts.parentId,
+    Filters: opts.filters,
+    PersonIds: opts.personIds,
   })
   return request<ItemsResponse>(s, `/Items?${params}`)
 }
 
-export async function getItem(s: Session, id: string) {
-  const params = query({ userId: s.userId, ids: id, Fields: DETAIL_FIELDS })
+async function getItemWithFields(s: Session, id: string, fields: string) {
+  const params = query({ userId: s.userId, ids: id, Fields: fields })
   const { Items } = await request<ItemsResponse>(s, `/Items?${params}`)
   if (!Items[0]) throw new Error('Titel nicht gefunden')
   return Items[0]
 }
+
+export const getItem = (s: Session, id: string) => getItemWithFields(s, id, DETAIL_FIELDS)
+
+/** Item with everything the player needs: media sources, streams, chapters and trickplay. */
+export const getPlaybackItem = (s: Session, id: string) => getItemWithFields(s, id, PLAYBACK_FIELDS)
 
 export async function getSeasons(s: Session, seriesId: string) {
   const params = query({ userId: s.userId, Fields: 'ChildCount' })
@@ -132,13 +281,23 @@ export async function getAllItems(s: Session, type: string) {
   }
 }
 
-export function imageUrl(s: Session, id: string, type: 'Primary' | 'Backdrop' | 'Logo', width = 400) {
+export function imageUrl(s: Session, id: string, type: 'Primary' | 'Backdrop' | 'Logo' | 'Thumb', width = 400) {
   const path = type === 'Backdrop' ? 'Backdrop/0' : type
   return `${s.server}/Items/${id}/Images/${path}?maxWidth=${width}&quality=85`
 }
 
 export function posterUrl(s: Session, item: BaseItem, width = 400) {
   return item.ImageTags?.Primary ? imageUrl(s, item.Id, 'Primary', width) : undefined
+}
+
+/** Landscape image: episode still, then the item's or its series' thumb, then a backdrop. */
+export function thumbUrl(s: Session, item: BaseItem, width = 600) {
+  if (item.Type === 'Episode' && item.ImageTags?.Primary) return imageUrl(s, item.Id, 'Primary', width)
+  if (item.ImageTags?.Thumb) return imageUrl(s, item.Id, 'Thumb', width)
+  if (item.ParentThumbItemId && item.ParentThumbImageTag) return imageUrl(s, item.ParentThumbItemId, 'Thumb', width)
+  if (item.BackdropImageTags?.length) return imageUrl(s, item.Id, 'Backdrop', width)
+  if (item.ParentBackdropItemId && item.ParentBackdropImageTags?.length) return imageUrl(s, item.ParentBackdropItemId, 'Backdrop', width)
+  return undefined
 }
 
 export function personImageUrl(s: Session, person: Person) {
@@ -163,4 +322,97 @@ export async function setCustomPref(s: Session, key: string, value: string, doc 
   const prefs = await request<DisplayPreferences>(s, prefsPath(s, doc))
   const body = { ...prefs, CustomPrefs: { ...prefs.CustomPrefs, [key]: value } }
   await request(s, prefsPath(s, doc), { method: 'POST', body: JSON.stringify(body) })
+}
+
+export const getMe = (s: Session) => request<Me>(s, '/Users/Me')
+
+export async function getUserViews(s: Session) {
+  const { Items } = await request<ItemsResponse>(s, `/UserViews?${query({ userId: s.userId })}`)
+  return Items as UserView[]
+}
+
+export async function getResume(s: Session, opts: { limit?: number; parentId?: string } = {}) {
+  const params = query({
+    userId: s.userId,
+    limit: opts.limit ?? 20,
+    parentId: opts.parentId,
+    mediaTypes: 'Video',
+    enableTotalRecordCount: false,
+    imageTypeLimit: 1,
+    fields: 'PrimaryImageAspectRatio',
+  })
+  const { Items } = await request<ItemsResponse>(s, `/UserItems/Resume?${params}`)
+  return Items
+}
+
+export async function getNextUp(s: Session, opts: { limit?: number; seriesId?: string } = {}) {
+  const params = query({
+    userId: s.userId,
+    limit: opts.limit ?? 20,
+    seriesId: opts.seriesId,
+    enableResumable: false,
+    imageTypeLimit: 1,
+    fields: 'PrimaryImageAspectRatio,Overview',
+  })
+  const { Items } = await request<ItemsResponse>(s, `/Shows/NextUp?${params}`)
+  return Items
+}
+
+/** Recently added items of one library. The answer is a plain array. */
+export function getLatest(s: Session, parentId: string, limit = 20) {
+  const params = query({ userId: s.userId, parentId, limit, fields: LIST_FIELDS, imageTypeLimit: 1 })
+  return request<BaseItem[]>(s, `/Items/Latest?${params}`)
+}
+
+export async function getEpisodes(s: Session, seriesId: string, seasonId: string) {
+  const params = query({ userId: s.userId, seasonId, fields: 'Overview' })
+  const { Items } = await request<ItemsResponse>(s, `/Shows/${seriesId}/Episodes?${params}`)
+  return Items
+}
+
+export async function getAdjacentEpisodes(
+  s: Session,
+  seriesId: string,
+  episodeId: string,
+): Promise<{ previous?: BaseItem; next?: BaseItem }> {
+  const params = query({ userId: s.userId, adjacentTo: episodeId, limit: 3 })
+  const { Items } = await request<ItemsResponse>(s, `/Shows/${seriesId}/Episodes?${params}`)
+  const index = Items.findIndex((item) => item.Id === episodeId)
+  if (index < 0) return {}
+  return { previous: Items[index - 1], next: Items[index + 1] }
+}
+
+export async function getSimilar(s: Session, id: string, limit = 12) {
+  const params = query({ userId: s.userId, limit, fields: LIST_FIELDS })
+  const { Items } = await request<ItemsResponse>(s, `/Items/${id}/Similar?${params}`)
+  return Items
+}
+
+export async function searchPeople(s: Session, term: string, limit = 20) {
+  const params = query({ userId: s.userId, searchTerm: term, limit })
+  const { Items } = await request<ItemsResponse>(s, `/Persons?${params}`)
+  return Items
+}
+
+export async function getPersonItems(s: Session, personId: string) {
+  const params = query({
+    userId: s.userId,
+    personIds: personId,
+    recursive: true,
+    includeItemTypes: 'Movie,Series',
+    sortBy: 'ProductionYear,SortName',
+    sortOrder: 'Descending',
+    fields: LIST_FIELDS,
+    imageTypeLimit: 1,
+  })
+  const { Items } = await request<ItemsResponse>(s, `/Items?${params}`)
+  return Items
+}
+
+export function setPlayed(s: Session, id: string, played: boolean) {
+  return request<UserData>(s, `/UserPlayedItems/${id}?${query({ userId: s.userId })}`, { method: played ? 'POST' : 'DELETE' })
+}
+
+export function setFavorite(s: Session, id: string, favorite: boolean) {
+  return request<UserData>(s, `/UserFavoriteItems/${id}?${query({ userId: s.userId })}`, { method: favorite ? 'POST' : 'DELETE' })
 }

@@ -3,7 +3,7 @@
     "name": "BurrowCinema",
     "slug": "burrowcinema",
     "version": "0.0.1",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "burrowcinema",
     "userInterfaceStyle": "dark",
@@ -27,6 +27,21 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "react-native-video",
+        {
+          "enableAndroidPictureInPicture": true,
+          "enableNotificationControls": false,
+          "enableBackgroundAudio": false
+        }
+      ],
+      [
+        "@react-native-tvos/config-tv",
+        {
+          "isTV": true,
+          "androidTVBanner": "./assets/images/tv-banner.png"
+        }
+      ],
       "expo-sqlite",
       "expo-background-task",
       [
@@ -49,7 +64,7 @@
         {
           "android": {
             "usesCleartextTraffic": true,
-            "extraProguardRules": "# WorkManager (used by expo-background-task) creates its Room database by reflection;\n# without these rules R8 removes the constructor and the app crashes before it starts.\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.** { *; }"
+            "extraProguardRules": "# WorkManager (used by expo-background-task) creates its Room database by reflection;\n# without these rules R8 removes the constructor and the app crashes before it starts.\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.** { *; }\n# react-native-video und Media3: Renderer, Extractor und MediaSource Factories werden teils per Reflection geladen.\n-keep class com.brentvatne.** { *; }\n-keep class androidx.media3.** { *; }\n-dontwarn androidx.media3.**\n-dontwarn com.google.ads.interactivemedia.**"
           }
         }
       ],

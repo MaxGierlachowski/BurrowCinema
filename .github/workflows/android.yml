@@ -53,8 +53,20 @@ jobs:
 
       - name: Build release APK
         working-directory: app/android
-        # Modern phones are arm64; building only that ABI keeps the APK small and the build fast.
-        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+        # Phones are arm64, but many TV boxes still run a 32 bit system, so armeabi-v7a is built too.
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon
+
+      - name: Check APK
+        # One APK for phones and Android TV: both ABIs and the TV launcher entry must be present.
+        run: |
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          aapt=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt
+          "$aapt" dump badging "$apk" > "$RUNNER_TEMP/badging.txt"
+          grep -E "native-code|launchable-activity|uses-feature" "$RUNNER_TEMP/badging.txt"
+          for needle in "'arm64-v8a'" "'armeabi-v7a'" "leanback-launchable-activity"; do
+            grep -q "$needle" "$RUNNER_TEMP/badging.txt" || { echo "::error::APK is missing $needle"; exit 1; }
+          done
+          echo "APK size: $(du -h "$apk" | cut -f1)"
 
       - name: Name the APK
         run: |
@@ -82,4 +94,6 @@ jobs:
             2. Falls nachgefragt, die Installation aus dieser Quelle erlauben.
             3. In der App mit dem Jellyfin Account anmelden. Radarr, Sonarr und der Auslosung Server kommen automatisch aus dem Jellyfin Profil.
 
-            Für Android Geräte mit 64 Bit ARM Prozessor (praktisch alle aktuellen Handys).
+            Läuft auf Handys und Android TV (64 und 32 Bit ARM).
+
+            Auf dem TV: APK mit einer Downloader App oder per `adb install` installieren. BurrowCinema erscheint im TV Launcher. Anmeldung per Quick Connect: Code am TV anzeigen und in Jellyfin (Web, Quick Connect) oder in BurrowCinema auf dem Handy unter Einstellungen, TV verbinden, bestätigen.

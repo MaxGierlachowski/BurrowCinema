@@ -14,7 +14,7 @@ export const persister = createAsyncStoragePersister({ storage: Storage, key: 'b
 export const persistOptions = {
   persister,
   maxAge: 7 * 24 * 60 * 60_000,
-  buster: '0.0.1',
+  buster: '0.0.2',
   dehydrateOptions: {
     // Settings must always be synced fresh from Jellyfin at startup.
     shouldDehydrateQuery: (q: { queryKey: readonly unknown[]; state: { status: string } }) =>
