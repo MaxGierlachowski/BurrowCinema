@@ -26,14 +26,14 @@ def tap_text(text, last=False):
 def alive():
     return sh('pidof', 'app.burrowcinema').strip() != ''
 
-fields = [n for n in nodes() if 'android.widget.EditText' in n]
-for node, value in zip(fields, ['http://10.0.2.2:8096', 'max', 'secret']):
-    sh('input', 'tap', *center(node))
+for index, value in enumerate(['http://10.0.2.2:8096', 'max', 'secret']):
+    fields = [n for n in nodes() if 'android.widget.EditText' in n]
+    sh('input', 'tap', *center(fields[index]))
     time.sleep(0.5)
     sh('input', 'text', value)
     time.sleep(0.3)
-sh('input', 'keyevent', '4')  # hide the keyboard
-time.sleep(1)
+    sh('input', 'keyevent', '4')  # hide the keyboard so the next field is visible
+    time.sleep(1)
 tap_text('Anmelden', last=True)
 time.sleep(10)
 print('== after login, alive:', alive(), texts()[:25])
