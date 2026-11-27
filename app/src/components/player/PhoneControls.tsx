@@ -26,7 +26,9 @@ export function PhoneControls(props: ControlsProps) {
         <Button variant="ghost" size="icon" icon={X} accessibilityLabel="Player schließen" onPress={props.onClose} />
         <Title title={props.title} subtitle={props.subtitle} />
         <Clock position={position} duration={duration} rate={props.rate} />
-        {props.onPip && <Button variant="ghost" size="icon" icon={PictureInPicture2} accessibilityLabel="Bild in Bild" onPress={props.onPip} />}
+        {props.onPip && (
+          <Button variant="ghost" size="icon" icon={PictureInPicture2} accessibilityLabel="Bild in Bild" onPress={props.onPip} />
+        )}
       </View>
 
       <View pointerEvents="box-none" className="absolute inset-0 flex-row items-center justify-center gap-12">
@@ -54,7 +56,14 @@ export function PhoneControls(props: ControlsProps) {
       </View>
 
       <View pointerEvents="box-none" className="mt-auto gap-1" style={[padding, { paddingBottom: insets.bottom + 8 }]}>
-        <SeekBar position={position} duration={duration} chapters={props.chapters} trickplay={props.trickplay} onSeek={onSeek} onScrub={props.onScrub} />
+        <SeekBar
+          position={position}
+          duration={duration}
+          chapters={props.chapters}
+          trickplay={props.trickplay}
+          onSeek={onSeek}
+          onScrub={props.onScrub}
+        />
         <PanelButtons panels={props.panels} onPanel={props.onPanel} />
       </View>
     </View>

@@ -93,7 +93,12 @@ export function PlaybackSettingsCard() {
     <Card>
       <CardTitle>Wiedergabe</CardTitle>
       <CardDescription>Gilt nur für dieses Gerät.</CardDescription>
-      <Choice label="Maximale Bitrate" options={BITRATE_OPTIONS} value={settings.maxBitrate} onChange={(maxBitrate) => update({ maxBitrate })} />
+      <Choice
+        label="Maximale Bitrate"
+        options={BITRATE_OPTIONS}
+        value={settings.maxBitrate}
+        onChange={(maxBitrate) => update({ maxBitrate })}
+      />
       {!isTV && (
         <Choice
           label="Dolby Digital direkt abspielen"
@@ -109,7 +114,12 @@ export function PlaybackSettingsCard() {
         value={settings.resumeRewindSeconds}
         onChange={(resumeRewindSeconds) => update({ resumeRewindSeconds })}
       />
-      <Choice label="Spulen um" options={seconds([5, 10, 15, 30])} value={settings.skipSeconds} onChange={(skipSeconds) => update({ skipSeconds })} />
+      <Choice
+        label="Spulen um"
+        options={seconds([5, 10, 15, 30])}
+        value={settings.skipSeconds}
+        onChange={(skipSeconds) => update({ skipSeconds })}
+      />
       <Choice
         label="Nächste Folge automatisch abspielen"
         hint="Nur wenn es auch im Jellyfin Profil eingeschaltet ist."
@@ -134,7 +144,12 @@ export function PlaybackSettingsCard() {
           onChange={(action) => update({ segmentActions: { ...settings.segmentActions, [segment.value]: action } })}
         />
       ))}
-      <Choice label="Untertitelgröße" options={SUBTITLE_SIZES} value={settings.subtitleSize} onChange={(subtitleSize) => update({ subtitleSize })} />
+      <Choice
+        label="Untertitelgröße"
+        options={SUBTITLE_SIZES}
+        value={settings.subtitleSize}
+        onChange={(subtitleSize) => update({ subtitleSize })}
+      />
     </Card>
   )
 }

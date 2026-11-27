@@ -39,10 +39,8 @@ class ProgressReporter {
     const before = this.playback
     this.item = item
     this.playback = playback
-    const sameSession = before && playback && before.playSessionId === playback.playSessionId
-    if (sameSession && (before.audioStreamIndex !== playback.audioStreamIndex || before.subtitleStreamIndex !== playback.subtitleStreamIndex)) {
-      this.now()
-    }
+    if (!before || !playback || before.playSessionId !== playback.playSessionId) return
+    if (before.audioStreamIndex !== playback.audioStreamIndex || before.subtitleStreamIndex !== playback.subtitleStreamIndex) this.now()
   }
 
   private report() {

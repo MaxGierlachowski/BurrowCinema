@@ -210,13 +210,19 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
   const { next: nextEpisode, previous: previousEpisode } = upNext
   const playNext = nextEpisode && (() => playEpisode(nextEpisode))
   const playPrevious = previousEpisode && (() => playEpisode(previousEpisode))
+  useEffect(() => {
+    if (upNext.stillWatching) setPaused(true)
+  }, [upNext.stillWatching])
 
   const changeTracks = (change: TrackChange) => {
     negotiation.changeTracks(change, secondsToTicks(position))
     const next = { ...resolved, ...change }
     const audio = next.audioStreams.find((m) => m.Index === next.audioStreamIndex)
     const subtitle = next.subtitleStreams.find((m) => m.Index === next.subtitleStreamIndex)
-    rememberTracks(trackKey(item), { audioLanguage: audio?.Language, subtitleLanguage: next.subtitleStreamIndex < 0 ? null : subtitle?.Language })
+    rememberTracks(trackKey(item), {
+      audioLanguage: audio?.Language,
+      subtitleLanguage: next.subtitleStreamIndex < 0 ? null : subtitle?.Language,
+    })
   }
 
   const info = trickplayFor(item, resolved.mediaSource.Id)
@@ -361,7 +367,7 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
         textTracks={resolved.externalSubtitles}
         selectedSubtitleTitle={externalTitle}
         audioTrackPosition={audioPosition}
-        paused={paused || upNext.stillWatching}
+        paused={paused}
         rate={rate}
         resizeMode={resizeMode}
         subtitleSize={settings.subtitleSize}

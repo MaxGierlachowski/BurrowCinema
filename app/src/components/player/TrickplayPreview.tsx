@@ -28,7 +28,7 @@ export function TrickplayPreview({ tile, seconds, width = 192 }: { tile?: Trickp
           />
         </View>
       )}
-      <Text className="rounded bg-black/70 px-2 py-0.5 text-sm font-semibold text-white">{formatTime(seconds)}</Text>
+      <Text className="rounded bg-black/70 px-2 py-0.5 text-sm font-semibold text-foreground">{formatTime(seconds)}</Text>
     </View>
   )
 }

@@ -83,10 +83,10 @@ export function VideoSurface(props: Props) {
     () => (selectedSubtitleTitle ? { type: SelectedTrackType.TITLE, value: selectedSubtitleTitle } : { type: SelectedTrackType.DISABLED }),
     [selectedSubtitleTitle],
   )
-  const audioTrack = useMemo(
-    () => (audioTrackPosition !== undefined && audioTrackPosition >= 0 ? { type: SelectedTrackType.INDEX, value: audioTrackPosition } : undefined),
-    [audioTrackPosition],
-  )
+  const audioTrack = useMemo(() => {
+    if (audioTrackPosition === undefined || audioTrackPosition < 0) return undefined
+    return { type: SelectedTrackType.INDEX, value: audioTrackPosition }
+  }, [audioTrackPosition])
   const subtitleStyle = useMemo(() => ({ fontSize: FONT_SIZE[subtitleSize] }), [subtitleSize])
 
   return (

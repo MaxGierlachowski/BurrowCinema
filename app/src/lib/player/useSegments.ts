@@ -1,7 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import type { Session } from '@shared/jellyfin'
-import { getMediaSegments, segmentAt, TICKS_PER_SECOND, type MediaSegment, type PlaybackSettings, type SegmentAction } from '@shared/playback'
+import {
+  getMediaSegments,
+  segmentAt,
+  TICKS_PER_SECOND,
+  type MediaSegment,
+  type PlaybackSettings,
+  type SegmentAction,
+} from '@shared/playback'
 
 export const segmentAction = (segment: MediaSegment, actions: PlaybackSettings['segmentActions']): SegmentAction =>
   segment.Type === 'Unknown' ? 'off' : actions[segment.Type]
@@ -22,10 +29,7 @@ export function useSegments(
     queryFn: () => getMediaSegments(session, itemId),
     staleTime: Infinity,
   })
-  const segment = segmentAt(
-    data.filter((s) => segmentAction(s, actions) !== 'off'),
-    positionTicks,
-  )
+  const segment = segmentAt(data.filter((s) => segmentAction(s, actions) !== 'off'), positionTicks)
   const previous = useRef<number | undefined>(undefined)
   const latest = useRef(onAutoSkip)
   useEffect(() => {
@@ -36,7 +40,8 @@ export function useSegments(
     const before = previous.current
     previous.current = positionTicks
     if (!segment || before === undefined || segmentAction(segment, actions) !== 'auto') return
-    const natural = before <= segment.StartTicks + TICKS_PER_SECOND && positionTicks - before >= 0 && positionTicks - before < 3 * TICKS_PER_SECOND
+    const step = positionTicks - before
+    const natural = before <= segment.StartTicks + TICKS_PER_SECOND && step >= 0 && step < 3 * TICKS_PER_SECOND
     if (natural) latest.current(segment)
   }, [positionTicks, segment, actions])
 

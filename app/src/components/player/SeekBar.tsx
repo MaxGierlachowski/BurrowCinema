@@ -56,7 +56,11 @@ export function SeekBar({ position, duration, chapters, pending, trickplay, onSe
   return (
     <View className="gap-1">
       {preview !== undefined && width > 0 && (
-        <View pointerEvents="none" className="absolute bottom-14" style={{ left: clamp(ratio * width - PREVIEW_WIDTH / 2, 0, Math.max(0, width - PREVIEW_WIDTH)) }}>
+        <View
+          pointerEvents="none"
+          className="absolute bottom-14"
+          style={{ left: clamp(ratio * width - PREVIEW_WIDTH / 2, 0, Math.max(0, width - PREVIEW_WIDTH)) }}
+        >
           <View style={{ width: PREVIEW_WIDTH }}>
             <TrickplayPreview tile={trickplay?.(preview)} seconds={preview} width={PREVIEW_WIDTH} />
           </View>
@@ -100,8 +104,10 @@ export function SeekBar({ position, duration, chapters, pending, trickplay, onSe
         </View>
       )}
       <View pointerEvents="none" className="flex-row justify-between">
-        <Text className={cn('text-sm text-white tabular-nums', isTV && 'text-base')}>{formatTime(shown)}</Text>
-        <Text className={cn('text-sm text-white/70 tabular-nums', isTV && 'text-base')}>-{formatTime(Math.max(0, duration - shown))}</Text>
+        <Text className={cn('text-sm text-foreground tabular-nums', isTV && 'text-base')}>{formatTime(shown)}</Text>
+        <Text className={cn('text-sm text-foreground/70 tabular-nums', isTV && 'text-base')}>
+          -{formatTime(Math.max(0, duration - shown))}
+        </Text>
       </View>
     </View>
   )

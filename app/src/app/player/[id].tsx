@@ -8,7 +8,12 @@ const toNumber = (value?: string) => (value === undefined || value === '' || Num
 
 export default function PlayerRoute() {
   const { id, start, mediaSourceId, audio, sub } = useLocalSearchParams<SearchParams>()
-  const params: PlayParams = { start: start === 'beginning' ? 'beginning' : 'resume', mediaSourceId, audio: toNumber(audio), sub: toNumber(sub) }
+  const params: PlayParams = {
+    start: start === 'beginning' ? 'beginning' : 'resume',
+    mediaSourceId,
+    audio: toNumber(audio),
+    sub: toNumber(sub),
+  }
   // A new key per item: the next episode (router.replace) starts with fresh player state.
   return <PlayerScreen key={id} id={id} params={params} />
 }

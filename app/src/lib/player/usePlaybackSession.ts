@@ -105,7 +105,10 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
     [renegotiate],
   )
 
-  const changeQuality = useCallback((maxBitrate: number, positionTicks: number) => void renegotiate({ maxBitrate }, positionTicks), [renegotiate])
+  const changeQuality = useCallback(
+    (maxBitrate: number, positionTicks: number) => void renegotiate({ maxBitrate }, positionTicks),
+    [renegotiate],
+  )
 
   /** Called on a player error. Returns true when a transcode retry was started. */
   const fallback = useCallback(
@@ -118,5 +121,6 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
     [renegotiate],
   )
 
-  return { playback, error, setError, changeTracks, changeQuality, fallback, maxBitrate: lastRequest.current?.maxBitrate ?? settings.maxBitrate }
+  const maxBitrate = lastRequest.current?.maxBitrate ?? settings.maxBitrate
+  return { playback, error, setError, changeTracks, changeQuality, fallback, maxBitrate }
 }

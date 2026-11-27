@@ -18,14 +18,14 @@ export function UpNextCard({ episode, secondsLeft, onPlay, onCancel }: Props) {
   const image = thumbUrl(session, episode, 400)
   return (
     <FocusGuide autoFocus className="w-80 gap-3 rounded-2xl border border-white/10 bg-black/80 p-4">
-      <Text className="text-xs font-medium tracking-wide text-white/70 uppercase">Nächste Folge</Text>
+      <Text className="text-xs font-medium tracking-wide text-foreground/70 uppercase">Nächste Folge</Text>
       <View className="flex-row gap-3">
         {image && <Image source={image} contentFit="cover" style={{ width: 112, height: 63, borderRadius: 8 }} />}
         <View className="min-w-0 flex-1">
           <Text className="font-semibold" numberOfLines={2}>
             {[episodeCode(episode), episode.Name].filter(Boolean).join(' · ')}
           </Text>
-          {secondsLeft !== undefined && <Text className="text-sm text-white/70">Startet in {secondsLeft} s</Text>}
+          {secondsLeft !== undefined && <Text className="text-sm text-foreground/70">Startet in {secondsLeft} s</Text>}
         </View>
       </View>
       <View className="flex-row gap-2">

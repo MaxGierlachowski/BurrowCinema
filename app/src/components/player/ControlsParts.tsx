@@ -22,9 +22,11 @@ export function Clock({ position, duration, rate }: Pick<ControlsProps, 'positio
   const remaining = duration > 0 ? Math.max(0, duration - position) / (rate || 1) : 0
   return (
     <View pointerEvents="none" className="items-end">
-      <Text className={cn('font-semibold text-white', isTV ? 'text-xl' : 'text-base')}>{formatClock(now)}</Text>
+      <Text className={cn('font-semibold text-foreground', isTV ? 'text-xl' : 'text-base')}>{formatClock(now)}</Text>
       {remaining > 0 && (
-        <Text className={cn('text-white/70', isTV ? 'text-base' : 'text-xs')}>Endet um {formatClock(new Date(now.getTime() + remaining * 1000))}</Text>
+        <Text className={cn('text-foreground/70', isTV ? 'text-base' : 'text-xs')}>
+          Endet um {formatClock(new Date(now.getTime() + remaining * 1000))}
+        </Text>
       )}
     </View>
   )
@@ -33,11 +35,11 @@ export function Clock({ position, duration, rate }: Pick<ControlsProps, 'positio
 export function Title({ title, subtitle }: Pick<ControlsProps, 'title' | 'subtitle'>) {
   return (
     <View pointerEvents="none" className="min-w-0 flex-1">
-      <Text className={cn('font-bold text-white', isTV ? 'text-3xl' : 'text-lg')} numberOfLines={1}>
+      <Text className={cn('font-bold text-foreground', isTV ? 'text-3xl' : 'text-lg')} numberOfLines={1}>
         {title}
       </Text>
       {subtitle && (
-        <Text className={cn('text-white/70', isTV ? 'text-lg' : 'text-sm')} numberOfLines={1}>
+        <Text className={cn('text-foreground/70', isTV ? 'text-lg' : 'text-sm')} numberOfLines={1}>
           {subtitle}
         </Text>
       )}
@@ -50,7 +52,14 @@ export function PanelButtons({ panels, onPanel }: Pick<ControlsProps, 'panels' |
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }} className="grow-0">
       {panels.map((panel) => (
-        <Button key={panel.id} variant="ghost" size="sm" icon={panel.icon} accessibilityLabel={panel.label} onPress={() => onPanel(panel.id)}>
+        <Button
+          key={panel.id}
+          variant="ghost"
+          size="sm"
+          icon={panel.icon}
+          accessibilityLabel={panel.label}
+          onPress={() => onPanel(panel.id)}
+        >
           {panel.label}
         </Button>
       ))}

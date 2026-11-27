@@ -8,6 +8,7 @@ const METHOD: Record<ResolvedPlayback['playMethod'], string> = {
   Transcode: 'Transkodierung',
 }
 
+const join = (...parts: (string | number | undefined)[]) => parts.filter(Boolean).join(' · ')
 const mbit = (bits?: number) => (bits ? `${(bits / 1_000_000).toFixed(1).replace('.', ',')} Mbit/s` : undefined)
 
 /** Light "Statistiken": how the stream is delivered and what it contains. */
@@ -19,8 +20,8 @@ export function StatsOverlay({ playback }: { playback: ResolvedPlayback }) {
   const rows: [string, string | undefined][] = [
     ['Wiedergabe', METHOD[playback.playMethod]],
     ['Container', mediaSource.Container],
-    ['Video', video && [video.Codec?.toUpperCase(), video.Width && `${video.Width}×${video.Height}`, video.VideoRangeType].filter(Boolean).join(' · ')],
-    ['Audio', audio && [audio.Codec?.toUpperCase(), audio.ChannelLayout ?? (audio.Channels && `${audio.Channels} Kanäle`)].filter(Boolean).join(' · ')],
+    ['Video', video && join(video.Codec?.toUpperCase(), video.Width && `${video.Width}×${video.Height}`, video.VideoRangeType)],
+    ['Audio', audio && join(audio.Codec?.toUpperCase(), audio.ChannelLayout ?? (audio.Channels && `${audio.Channels} Kanäle`))],
     ['Bitrate', mbit(mediaSource.Bitrate)],
     ['Gründe', playback.transcodeReasons.join(', ') || undefined],
   ]
@@ -29,8 +30,8 @@ export function StatsOverlay({ playback }: { playback: ResolvedPlayback }) {
       {rows
         .filter(([, value]) => value)
         .map(([label, value]) => (
-          <Text key={label} className="text-xs text-white">
-            <Text className="text-xs text-white/60">{label}: </Text>
+          <Text key={label} className="text-xs text-foreground">
+            <Text className="text-xs text-foreground/60">{label}: </Text>
             {value}
           </Text>
         ))}

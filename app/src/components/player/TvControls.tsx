@@ -41,7 +41,9 @@ export function TvControls(props: ControlsProps) {
           />
         </FocusGuide>
         <View className="flex-row items-center gap-2">
-          {props.onPrevious && <Button variant="ghost" size="icon" icon={SkipBack} accessibilityLabel="Vorherige Folge" onPress={props.onPrevious} />}
+          {props.onPrevious && (
+            <Button variant="ghost" size="icon" icon={SkipBack} accessibilityLabel="Vorherige Folge" onPress={props.onPrevious} />
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -63,7 +65,9 @@ export function TvControls(props: ControlsProps) {
             accessibilityLabel={`${skipSeconds} Sekunden vor`}
             onPress={() => onSeek(Math.min(duration, position + skipSeconds))}
           />
-          {props.onNext && <Button variant="ghost" size="icon" icon={SkipForward} accessibilityLabel="Nächste Folge" onPress={props.onNext} />}
+          {props.onNext && (
+            <Button variant="ghost" size="icon" icon={SkipForward} accessibilityLabel="Nächste Folge" onPress={props.onNext} />
+          )}
           <View className="ml-auto">
             <PanelButtons panels={props.panels} onPanel={props.onPanel} />
           </View>
@@ -81,7 +85,7 @@ export function SeekIndicator({ seconds, duration, tile }: { seconds: number; du
       <View className="h-1 w-96 overflow-hidden rounded-full bg-white/25">
         <View className="h-1 bg-primary" style={{ width: `${duration > 0 ? clamp(seconds / duration, 0, 1) * 100 : 0}%` }} />
       </View>
-      <Text className="text-sm text-white/70">{formatTime(duration)}</Text>
+      <Text className="text-sm text-foreground/70">{formatTime(duration)}</Text>
     </View>
   )
 }
