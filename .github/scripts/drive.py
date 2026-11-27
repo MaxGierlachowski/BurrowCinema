@@ -68,9 +68,7 @@ if field:
     sh('input', 'tap', *center(field[0]))
     time.sleep(0.5)
     sh('input', 'text', 'Filmabend')
-    sh('input', 'keyevent', '4')
-    time.sleep(1)
-    tap_text('Anlegen')
+    sh('input', 'keyevent', '66')  # Enter submits and creates the folder
     time.sleep(3)
     print('== after create, alive:', alive(), texts()[:15])
 sh('input', 'keyevent', '4')  # close the sheet
