@@ -1,8 +1,12 @@
 import { NativeTabs } from 'expo-router/native-tabs'
 import { colors } from '@shared/theme'
+import { TvTabs } from '@/components/tv/TvTabs'
+import { features } from '@/lib/features'
+import { isTV } from '@/lib/tv'
 
-/** System tab bar (Material 3 on Android, native on iOS) with the same five sections as the web app. */
+/** System tab bar (Material 3 on Android, native on iOS) with the same five sections as the web app; a sidebar on TV. */
 export default function TabLayout() {
+  if (isTV && features.tvShell) return <TvTabs />
   return (
     <NativeTabs
       backgroundColor={colors.card}
@@ -19,7 +23,7 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Label>Suche</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="draws">
+      <NativeTabs.Trigger name="draws" hidden={isTV}>
         <NativeTabs.Trigger.Label>Auslosung</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'dice', selected: 'dice.fill' }} md="casino" />
       </NativeTabs.Trigger>

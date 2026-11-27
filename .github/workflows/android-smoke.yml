@@ -1,13 +1,20 @@
 name: Android smoke test
 
-# Builds the app for an x86_64 emulator, starts it on Android 16 and prints the system log,
-# so startup crashes can be diagnosed without a physical device.
+# Builds an x86_64 release APK once, then drives it on a phone and on an Android TV emulator
+# (Android 16) against a mock Jellyfin with generated test media. Any failed check fails the job.
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths: [app/**, shared/**, .github/**]
+
+concurrency:
+  group: android-smoke-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  smoke:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -36,25 +43,77 @@ jobs:
         working-directory: app/android
         run: ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
 
+      - name: Check APK
+        # Phone and TV launcher entries in one APK, touchscreen optional for TVs.
+        run: |
+          apk=app/android/app/build/outputs/apk/release/app-release.apk
+          aapt=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt
+          "$aapt" dump badging "$apk" > badging.txt
+          grep -E "native-code|launchable-activity|uses-feature" badging.txt
+          for needle in "leanback-launchable-activity" "^launchable-activity" "uses-feature-not-required: name='android.hardware.touchscreen'"; do
+            grep -q "$needle" badging.txt || { echo "::error::APK is missing $needle"; exit 1; }
+          done
+          echo "APK size: $(du -h "$apk" | cut -f1)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-apk
+          path: app/android/app/build/outputs/apk/release/app-release.apk
+
+  emulator:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: phone
+            target: google_apis
+            profile: pixel_7
+            ram: 2048M
+          - mode: tv
+            target: android-tv
+            profile: tv_1080p
+            ram: 4096M
+    name: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: smoke-apk
+          path: apk
+
+      - name: Install ffmpeg
+        run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Start the app in an emulator
+      - name: Drive the app in the emulator
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          APK: apk/app-release.apk
         with:
           api-level: 36
           arch: x86_64
-          target: google_apis
+          target: ${{ matrix.target }}
+          profile: ${{ matrix.profile }}
+          ram-size: ${{ matrix.ram }}
           disable-animations: true
-          profile: pixel_7
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: bash .github/scripts/smoke.sh
+          script: bash .github/scripts/smoke.sh ${{ matrix.mode }}
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-logcat
+          name: smoke-${{ matrix.mode }}
           path: smoke-*

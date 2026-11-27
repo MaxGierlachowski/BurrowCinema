@@ -7,13 +7,17 @@ import { ARR_LABEL, getArrSettings, type ArrKind } from '@shared/arr'
 import { getDrawServer } from '@shared/draws'
 import { useAuth, useSession } from '@shared/hooks/useAuth'
 import { NotificationsCard } from '@/components/draws/NotificationsCard'
+import { PlaybackSettingsCard } from '@/components/player/PlaybackSettingsCard'
 import { PageHeader, Screen } from '@/components/Screen'
 import { ARR_HINT, ArrForm } from '@/components/settings/ArrForm'
 import { DRAW_SERVER_HINT, DrawServerForm } from '@/components/settings/DrawServerForm'
+import { TvConnectCard } from '@/components/settings/TvConnectCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
+import { features } from '@/lib/features'
+import { isTV } from '@/lib/tv'
 
 function ConnectedTitle({ children, connected }: { children: string; connected: boolean }) {
   return (
@@ -92,14 +96,15 @@ export default function Settings() {
           <View className="mx-auto w-full max-w-2xl">
             <PageHeader title="Einstellungen" />
             <View className="gap-4">
+              <PlaybackSettingsCard />
               <JellyfinCard />
+              {!isTV && features.quickConnect && <TvConnectCard />}
               <ArrCard kind="radarr" />
               <ArrCard kind="sonarr" />
               <DrawServerCard />
-              <NotificationsCard />
+              {!isTV && <NotificationsCard />}
               <Text className="px-1 text-xs text-muted-foreground">
-                API Keys, Server Adressen und Ordner werden in deinem Jellyfin Profil gespeichert und sind auf allen
-                Geräten verfügbar.
+                API Keys, Server Adressen und Ordner werden in deinem Jellyfin Profil gespeichert und sind auf allen Geräten verfügbar.
               </Text>
               {version && <Text className="px-1 text-xs text-muted-foreground">Version {version}</Text>}
             </View>
