@@ -2,7 +2,8 @@ name: Android APK
 
 # Builds the Expo app into an installable APK without an Expo account.
 # Every change to app/ or shared/ on main produces an APK artifact.
-# Pushing a tag (for example 001) also publishes a GitHub release with the APK attached.
+# A release with the APK attached is published either by pushing a tag (for example 001)
+# or by starting this workflow by hand under Actions and entering a release name.
 
 on:
   push:
@@ -10,6 +11,11 @@ on:
     paths: [app/**, shared/**, .github/workflows/android.yml]
     tags: ['[0-9]*']
   workflow_dispatch:
+    inputs:
+      release:
+        description: Release name and tag, for example 002. Leave empty to only build the APK.
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -52,7 +58,7 @@ jobs:
 
       - name: Name the APK
         run: |
-          version=${{ github.ref_type == 'tag' && github.ref_name || format('main-{0}', github.run_number) }}
+          version=${{ inputs.release || (github.ref_type == 'tag' && github.ref_name) || format('main-{0}', github.run_number) }}
           cp android/app/build/outputs/apk/release/app-release.apk "../BurrowCinema-$version.apk"
           ls -lh ../BurrowCinema-*.apk
 
@@ -62,15 +68,17 @@ jobs:
           path: BurrowCinema-*.apk
 
       - name: Publish release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.release != ''
         uses: softprops/action-gh-release@v2
         with:
-          name: BurrowCinema ${{ github.ref_name }}
+          tag_name: ${{ inputs.release || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: BurrowCinema ${{ inputs.release || github.ref_name }}
           files: BurrowCinema-*.apk
           body: |
             Android App zum direkten Installieren.
 
-            1. `BurrowCinema-${{ github.ref_name }}.apk` unten herunterladen und auf dem Handy öffnen.
+            1. `BurrowCinema-${{ inputs.release || github.ref_name }}.apk` unten herunterladen und auf dem Handy öffnen.
             2. Falls nachgefragt, die Installation aus dieser Quelle erlauben.
             3. In der App mit dem Jellyfin Account anmelden. Radarr, Sonarr und der Auslosung Server kommen automatisch aus dem Jellyfin Profil.
 
