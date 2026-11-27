@@ -1,8 +1,9 @@
 import { Check } from 'lucide-react-native'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
 import { haptic } from '@/lib/haptics'
+import { Focusable } from '@/lib/tv'
 import { cn } from '@/lib/utils'
 
 export type Option = { value: string; label: string; hint?: string }
@@ -17,7 +18,7 @@ export function OptionList({ title, options, value, onChange }: Props) {
       {options.map((option) => {
         const active = value === option.value
         return (
-          <Pressable
+          <Focusable
             key={option.value}
             accessibilityRole="radio"
             accessibilityState={{ checked: active }}
@@ -34,7 +35,7 @@ export function OptionList({ title, options, value, onChange }: Props) {
               {option.label}
             </Text>
             {option.hint && <Text className="text-xs text-muted-foreground">{option.hint}</Text>}
-          </Pressable>
+          </Focusable>
         )
       })}
     </View>

@@ -300,6 +300,20 @@ export function thumbUrl(s: Session, item: BaseItem, width = 600) {
   return undefined
 }
 
+/** Backdrop of the item, or of its series for seasons and episodes. */
+export function backdropUrl(s: Session, item: BaseItem, width = 1600) {
+  if (item.BackdropImageTags?.length) return imageUrl(s, item.Id, 'Backdrop', width)
+  if (item.ParentBackdropItemId && item.ParentBackdropImageTags?.length) return imageUrl(s, item.ParentBackdropItemId, 'Backdrop', width)
+  return undefined
+}
+
+/** Portrait poster; seasons and episodes without their own fall back to the series poster. */
+export function seriesPosterUrl(s: Session, item: BaseItem, width = 400) {
+  if (item.Type !== 'Episode' && item.ImageTags?.Primary) return imageUrl(s, item.Id, 'Primary', width)
+  if (item.SeriesId && item.SeriesPrimaryImageTag) return imageUrl(s, item.SeriesId, 'Primary', width)
+  return posterUrl(s, item, width)
+}
+
 export function personImageUrl(s: Session, person: Person) {
   return person.PrimaryImageTag ? imageUrl(s, person.Id, 'Primary', 200) : undefined
 }
@@ -339,7 +353,7 @@ export async function getResume(s: Session, opts: { limit?: number; parentId?: s
     mediaTypes: 'Video',
     enableTotalRecordCount: false,
     imageTypeLimit: 1,
-    fields: 'PrimaryImageAspectRatio',
+    fields: 'PrimaryImageAspectRatio,Overview',
   })
   const { Items } = await request<ItemsResponse>(s, `/UserItems/Resume?${params}`)
   return Items

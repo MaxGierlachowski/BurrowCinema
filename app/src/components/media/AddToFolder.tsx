@@ -1,6 +1,6 @@
 import { Check, FolderPlus, Plus } from 'lucide-react-native'
 import { useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { toast } from 'sonner-native'
 import type { FolderItem } from '@shared/folders'
 import { plural } from '@shared/format'
@@ -11,11 +11,12 @@ import { Sheet } from '@/components/ui/sheet'
 import { SheetInput } from '@/components/ui/sheet-input'
 import { Text } from '@/components/ui/text'
 import { haptic } from '@/lib/haptics'
+import { Focusable } from '@/lib/tv'
 import { cn } from '@/lib/utils'
 
 function FolderRow({ name, count, active, onPress }: { name: string; count: number; active: boolean; onPress: () => void }) {
   return (
-    <Pressable
+    <Focusable
       accessibilityRole="checkbox"
       accessibilityState={{ checked: active }}
       onPress={onPress}
@@ -28,7 +29,7 @@ function FolderRow({ name, count, active, onPress }: { name: string; count: numb
         {name}
       </Text>
       <Text className="text-xs text-muted-foreground">{count}</Text>
-    </Pressable>
+    </Focusable>
   )
 }
 

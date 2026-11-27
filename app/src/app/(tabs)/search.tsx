@@ -5,10 +5,12 @@ import { ScrollView, View } from 'react-native'
 import { ARR_LABEL, getArrSettings, searchArr, type ArrKind } from '@shared/arr'
 import { fromArr, fromJellyfin } from '@shared/folders'
 import { useSession } from '@shared/hooks/useAuth'
-import { getItems } from '@shared/jellyfin'
+import { getItems, posterUrl, searchPeople } from '@shared/jellyfin'
 import { colors } from '@shared/theme'
 import { BurrowMark } from '@/components/BurrowMark'
 import { EmptyState } from '@/components/EmptyState'
+import { Row } from '@/components/media/DetailLayout'
+import { MediaCard, PersonCard } from '@/components/media/MediaCard'
 import { WrapGrid } from '@/components/media/WrapGrid'
 import { PosterCard, PosterGridSkeleton } from '@/components/PosterCard'
 import { Screen } from '@/components/Screen'
@@ -78,6 +80,40 @@ function ArrSheet({ kind, open, onOpenChange, onChange }: { kind: ArrKind; open:
         }}
       />
     </Sheet>
+  )
+}
+
+/** Episodes and people matching the term; each row only shows up when there are hits. */
+function MoreResults({ term }: { term: string }) {
+  const session = useSession()
+  const episodes = useQuery({
+    queryKey: ['search-episodes', term],
+    queryFn: () => getItems(session, { type: 'Episode', search: term, limit: 20 }),
+  })
+  const people = useQuery({ queryKey: ['search-people', term], queryFn: () => searchPeople(session, term) })
+  return (
+    <>
+      {!!episodes.data?.Items.length && (
+        <Row
+          title="Folgen"
+          className="mt-8"
+          data={episodes.data.Items}
+          itemWidth={220}
+          keyExtractor={(item) => item.Id}
+          renderItem={(item) => <MediaCard item={item} />}
+        />
+      )}
+      {!!people.data?.length && (
+        <Row
+          title="Personen"
+          className="mt-8"
+          data={people.data}
+          itemWidth={80}
+          keyExtractor={(person) => person.Id}
+          renderItem={(person) => <PersonCard id={person.Id} name={person.Name} image={posterUrl(session, person, 200)} />}
+        />
+      )}
+    </>
   )
 }
 
@@ -184,6 +220,7 @@ export default function Search() {
             <WrapGrid data={items} keyExtractor={(item) => item.Id} renderItem={(item) => <PosterCard item={fromJellyfin(session, item)} />} />
           </Section>
         )}
+        {searching && library.isSuccess && <MoreResults term={term} />}
         {searching && library.isLoading && (
           <View className="mt-8">
             <Skeletons />

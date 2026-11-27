@@ -1,6 +1,7 @@
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { Text } from '@/components/ui/text'
 import { haptic } from '@/lib/haptics'
+import { Focusable } from '@/lib/tv'
 import { cn } from '@/lib/utils'
 
 type Props<T extends string> = { value: T; onChange: (value: T) => void; options: { value: T; label: string }[]; className?: string }
@@ -12,7 +13,7 @@ export function Segmented<T extends string>({ value, onChange, options, classNam
       {options.map((option) => {
         const active = option.value === value
         return (
-          <Pressable
+          <Focusable
             key={option.value}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
@@ -24,7 +25,7 @@ export function Segmented<T extends string>({ value, onChange, options, classNam
             className={cn('flex-1 items-center justify-center rounded-md border border-transparent', active && 'border-input bg-input/30')}
           >
             <Text className={cn('text-sm font-medium', active ? 'text-foreground' : 'text-muted-foreground')}>{option.label}</Text>
-          </Pressable>
+          </Focusable>
         )
       })}
     </View>

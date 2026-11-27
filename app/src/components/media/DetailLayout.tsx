@@ -11,9 +11,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Text } from '@/components/ui/text'
+import { isTV } from '@/lib/tv'
 
 type Props = {
   title: string
+  /** Small line above the title, e.g. the series of an episode. */
+  kicker?: ReactNode
   backdrop?: string
   poster?: string
   logo?: string
@@ -32,8 +35,10 @@ function useBackdropHeight() {
   return Math.max(height * 0.38, 224)
 }
 
+/** Back arrow over the backdrop. Not on TV, where the remote's back key does this. */
 export function BackButton() {
   const insets = useSafeAreaInsets()
+  if (isTV) return null
   return (
     <Button
       variant="secondary"
@@ -65,7 +70,7 @@ function Title({ title, logo }: { title: string; logo?: string }) {
 }
 
 export function DetailLayout(props: Props) {
-  const { title, backdrop, poster, logo, meta, genres, tagline, overview, badges, actions, children } = props
+  const { title, kicker, backdrop, poster, logo, meta, genres, tagline, overview, badges, actions, children } = props
   const insets = useSafeAreaInsets()
   const height = useBackdropHeight()
 
@@ -85,6 +90,7 @@ export function DetailLayout(props: Props) {
             <Poster src={poster} title={title} />
           </View>
           <View className="min-w-0 flex-1 gap-2 self-end">
+            {kicker}
             <Title title={title} logo={logo} />
             <Text className="text-sm text-muted-foreground">{meta.filter(Boolean).join(' · ')}</Text>
             {badges && <View className="flex-row flex-wrap gap-1.5">{badges}</View>}
@@ -149,14 +155,15 @@ type RowProps<T> = {
   itemWidth: number
   keyExtractor: (item: T) => string
   renderItem: (item: T) => ReactElement
+  className?: string
 }
 
 const GAP = 12
 
 /** Horizontal, snapping list with a heading, like the web Row. */
-export function Row<T>({ title, data, itemWidth, keyExtractor, renderItem }: RowProps<T>) {
+export function Row<T>({ title, data, itemWidth, keyExtractor, renderItem, className = 'mt-10' }: RowProps<T>) {
   return (
-    <View className="mt-10">
+    <View className={className}>
       <Text className="mb-3 text-lg font-semibold">{title}</Text>
       <FlatList
         horizontal
@@ -164,10 +171,12 @@ export function Row<T>({ title, data, itemWidth, keyExtractor, renderItem }: Row
         keyExtractor={keyExtractor}
         renderItem={({ item }) => <View style={{ width: itemWidth }}>{renderItem(item)}</View>}
         showsHorizontalScrollIndicator={false}
-        snapToInterval={itemWidth + GAP}
+        snapToInterval={isTV ? undefined : itemWidth + GAP}
         decelerationRate="fast"
+        removeClippedSubviews={false}
         style={{ marginHorizontal: -16 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: GAP }}
+        // TV: room for the focus ring and zoom.
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: isTV ? 8 : 0, paddingBottom: isTV ? 12 : 8, gap: GAP }}
       />
     </View>
   )
