@@ -1,12 +1,25 @@
+import { File, Paths } from 'expo-file-system'
 import Storage from 'expo-sqlite/kv-store'
 
-// Custom entry: catch fatal JavaScript errors as early as possible. In a release build they would
-// close the app without any hint; instead they are stored and shown on the next start.
+// Custom entry: show the last crash instead of the app when there was one. A native handler
+// (plugins/withCrashLog.js) writes every crash to a file; fatal JavaScript errors are stored here too.
 const CRASH_KEY = 'bc.lastCrash'
 
-const read = () => {
+function takeLastCrash() {
   try {
-    return Storage.getItemSync(CRASH_KEY)
+    const file = new File(Paths.document, 'last-crash.txt')
+    if (file.exists) {
+      const text = file.textSync()
+      file.delete()
+      return text
+    }
+  } catch {
+    // ignore, try the JavaScript copy
+  }
+  try {
+    const text = Storage.getItemSync(CRASH_KEY)
+    if (text) Storage.removeItemSync(CRASH_KEY)
+    return text
   } catch {
     return null
   }
@@ -22,10 +35,6 @@ ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
   previousHandler(error, isFatal)
 })
 
-const crash = read()
-if (crash) {
-  Storage.removeItemSync(CRASH_KEY)
-  require('./src/CrashReport').showCrashReport(crash)
-} else {
-  require('expo-router/entry')
-}
+const crash = takeLastCrash()
+if (crash) require('./src/CrashReport').showCrashReport(crash)
+else require('expo-router/entry')

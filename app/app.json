@@ -90,7 +90,8 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "./plugins/withCrashLog"
     ],
     "experiments": {
       "typedRoutes": true,
