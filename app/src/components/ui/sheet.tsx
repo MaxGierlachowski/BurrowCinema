@@ -24,7 +24,7 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
   return (
     <Modal visible={open} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1 justify-end">
-        <Pressable accessibilityLabel="Schließen" onPress={close} className="absolute inset-0 bg-black/60" />
+        <Pressable accessibilityLabel="Schließen" onPress={close} focusable={false} className="absolute inset-0 bg-black/60" />
         <Animated.View
           entering={SlideInDown.duration(260)}
           className="max-h-[85%] rounded-t-3xl border-t border-border bg-popover"

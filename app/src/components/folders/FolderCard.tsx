@@ -1,13 +1,14 @@
 import { router, type Href } from 'expo-router'
 import { FolderHeart } from 'lucide-react-native'
 import { memo } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import type { Folder, FolderItem } from '@shared/folders'
 import { plural } from '@shared/format'
 import { Poster } from '@/components/PosterCard'
 import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
 import { haptic } from '@/lib/haptics'
+import { Focusable } from '@/lib/tv'
 
 function Cover({ item }: { item?: FolderItem }) {
   return <View className="flex-1 overflow-hidden">{item && <Poster src={item.poster} title={item.title} />}</View>
@@ -37,12 +38,13 @@ function Collage({ items }: { items: FolderItem[] }) {
 
 export const FolderCard = memo(function FolderCard({ folder }: { folder: Folder }) {
   return (
-    <Pressable
+    <Focusable
       onPress={() => {
         haptic.tap()
         router.push(`/folders/${folder.id}` as Href)
       }}
-      className="active:opacity-80"
+      accessibilityLabel={folder.name}
+      className="rounded-xl"
     >
       <View className="aspect-square overflow-hidden rounded-xl border border-border bg-muted">
         <Collage items={folder.items} />
@@ -51,6 +53,6 @@ export const FolderCard = memo(function FolderCard({ folder }: { folder: Folder 
         {folder.name}
       </Text>
       <Text className="text-xs text-muted-foreground">{plural(folder.items.length, 'Titel', 'Titel')}</Text>
-    </Pressable>
+    </Focusable>
   )
 })
