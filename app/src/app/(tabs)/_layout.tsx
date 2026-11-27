@@ -7,6 +7,7 @@ export default function TabLayout() {
     <NativeTabs
       backgroundColor={colors.card}
       indicatorColor={colors.accent}
+      labelVisibilityMode="labeled"
       tintColor={colors.primary}
       labelStyle={{ default: { color: colors.mutedForeground }, selected: { color: colors.primary } }}
     >
