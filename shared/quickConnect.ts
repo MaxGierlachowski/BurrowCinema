@@ -1,5 +1,5 @@
-import { authHeader, JellyfinError, request, sessionFromAuth, type Session } from './jellyfin'
-import { query } from './platform'
+import { authHeader, JellyfinError, sessionFromAuth, type Session } from './jellyfin'
+import { emitUnauthorized, query } from './platform'
 import { normalizeUrl } from './storage'
 
 /** Quick Connect: the TV shows a code, a signed in device (phone or Jellyfin web) confirms it. */
@@ -44,12 +44,21 @@ export async function loginWithQuickConnect(server: string, secret: string) {
   return sessionFromAuth(normalizeUrl(server), data)
 }
 
-/** Confirms a code shown on another device for the signed in user. */
+/**
+ * Confirms a code shown on another device for the signed in user. Not via request(): Jellyfin answers 401
+ * when Quick Connect is off, and request() would sign the phone out for that.
+ */
 export async function authorizeQuickConnect(s: Session, code: string) {
-  try {
-    await request(s, `/QuickConnect/Authorize?${query({ code: code.trim(), userId: s.userId })}`, { method: 'POST' })
-  } catch (error) {
-    if (error instanceof JellyfinError && error.status === 404) throw new Error('Code ungültig oder abgelaufen')
-    throw error
+  const res = await fetch(`${s.server}/QuickConnect/Authorize?${query({ code: code.trim(), userId: s.userId })}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: authHeader(s.token) },
+  })
+  if (res.ok) return
+  if (res.status === 404) throw new Error('Code ungültig oder abgelaufen')
+  if (res.status === 401) {
+    if (!(await quickConnectEnabled(s.server))) throw new Error('Quick Connect ist auf dem Server ausgeschaltet.')
+    emitUnauthorized()
+    throw new JellyfinError(401, 'Sitzung abgelaufen, bitte neu anmelden')
   }
+  throw new JellyfinError(res.status, `Quick Connect fehlgeschlagen (${res.status})`)
 }

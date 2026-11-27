@@ -20,5 +20,11 @@ export async function invalidateAfterPlayback(client: QueryClient, item: { Id: s
   const keys: (readonly unknown[])[] = [qk.item(item.Id), qk.playbackItem(item.Id), ['home'], ['next-up']]
   if (item.SeriesId) keys.push(qk.item(item.SeriesId), qk.seasons(item.SeriesId))
   if (item.SeasonId) keys.push(qk.episodes(item.SeasonId))
-  await Promise.all(keys.map((queryKey) => client.invalidateQueries({ queryKey })))
+  await Promise.all([
+    ...keys.map((queryKey) => client.invalidateQueries({ queryKey })),
+    // Library grids filtered by watched or favorite state (['items', type, sort, status]).
+    client.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === 'items' && queryKey[3] !== undefined && queryKey[3] !== 'all',
+    }),
+  ])
 }

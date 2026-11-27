@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown } from 'lucide-react-native'
 import { useMemo, useState, type ReactElement } from 'react'
 import { RefreshControl, View } from 'react-native'
@@ -77,16 +77,29 @@ type Props = {
   /** Content between the page header and the grid controls, e.g. the home rows. */
   rows?: ReactElement
   paddingBottom?: number
+  /** TV: the first poster takes the focus when the screen opens (pushed library route). */
+  focusFirst?: boolean
 }
 
 /** Poster grid of the whole library with sorting, status filter, endless loading and pull to refresh. */
-export function LibraryGrid({ title, type, onTypeChange, rows, paddingBottom = 24 }: Props) {
+export function LibraryGrid({ title, type, onTypeChange, rows, paddingBottom = 24, focusFirst }: Props) {
   const session = useSession()
-  const [sort, setSort] = useState<SortKey>('DateCreated')
-  const [status, setStatus] = useState<Status>('all')
+  const client = useQueryClient()
+  const [sort, setSortState] = useState<SortKey>('DateCreated')
+  const [status, setStatusState] = useState<Status>('all')
   const [refreshing, setRefreshing] = useState(false)
   const filters = status === 'all' ? undefined : status
   const focus = useFocusMemory(`library:${type}`)
+  // Until the user picks a card or changes the sort or filter; afterwards the focus memory decides.
+  const [initialFocus, setInitialFocus] = useState(!!focusFirst)
+  const setSort = (next: SortKey) => {
+    setInitialFocus(false)
+    setSortState(next)
+  }
+  const setStatus = (next: Status) => {
+    setInitialFocus(false)
+    setStatusState(next)
+  }
 
   const query = useInfiniteQuery({
     queryKey: ['items', type, sort, status],
@@ -106,7 +119,8 @@ export function LibraryGrid({ title, type, onTypeChange, rows, paddingBottom = 2
 
   const refresh = async () => {
     setRefreshing(true)
-    await query.refetch()
+    // The home rows above the grid are refreshed by the same pull.
+    await Promise.all([query.refetch(), rows ? client.invalidateQueries({ queryKey: ['home'] }) : undefined])
     setRefreshing(false)
   }
 
@@ -145,7 +159,16 @@ export function LibraryGrid({ title, type, onTypeChange, rows, paddingBottom = 2
     <PosterGrid
       data={items}
       keyExtractor={(item) => item.key}
-      renderItem={(item) => <PosterCard item={item} preferredFocus={focus.preferred(item.key)} onPress={() => focus.remember(item.key)} />}
+      renderItem={(item) => (
+        <PosterCard
+          item={item}
+          preferredFocus={focus.preferred(item.key) || (initialFocus && item.key === items[0]?.key)}
+          onPress={() => {
+            setInitialFocus(false)
+            focus.remember(item.key)
+          }}
+        />
+      )}
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
       ListFooterComponent={

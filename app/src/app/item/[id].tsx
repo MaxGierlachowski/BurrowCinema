@@ -104,7 +104,10 @@ function Similar({ item }: { item: BaseItem }) {
 /** Next Up episode of a series, else the next unwatched episode of its first season. */
 function useSeriesTarget(series: BaseItem) {
   const session = useSession()
-  const nextUp = useQuery({ queryKey: qk.nextUpSeries(series.Id), queryFn: () => getNextUp(session, { seriesId: series.Id, limit: 1 }) })
+  const nextUp = useQuery({
+    queryKey: qk.nextUpSeries(series.Id),
+    queryFn: () => getNextUp(session, { seriesId: series.Id, limit: 1, resumable: true }),
+  })
   const seasons = useQuery({ queryKey: qk.seasons(series.Id), queryFn: () => getSeasons(session, series.Id) })
   const first = seasons.data?.find((season) => (season.IndexNumber ?? 0) > 0) ?? seasons.data?.[0]
   const episodes = useQuery({

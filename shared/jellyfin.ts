@@ -359,12 +359,16 @@ export async function getResume(s: Session, opts: { limit?: number; parentId?: s
   return Items
 }
 
-export async function getNextUp(s: Session, opts: { limit?: number; seriesId?: string } = {}) {
+/**
+ * Next episodes to watch. Home leaves out episodes in progress (they are in Weiterschauen); a series page
+ * passes `resumable: true`, otherwise an episode in progress is skipped and the one after it is returned.
+ */
+export async function getNextUp(s: Session, opts: { limit?: number; seriesId?: string; resumable?: boolean } = {}) {
   const params = query({
     userId: s.userId,
     limit: opts.limit ?? 20,
     seriesId: opts.seriesId,
-    enableResumable: false,
+    enableResumable: opts.resumable ?? false,
     imageTypeLimit: 1,
     fields: 'PrimaryImageAspectRatio,Overview',
   })

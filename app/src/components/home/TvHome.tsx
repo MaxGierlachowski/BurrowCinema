@@ -34,7 +34,7 @@ export function TvHome() {
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="px-8 pb-12">
-      <TvHero preferredFocus={heroFocus} />
+      <TvHero preferredFocus={heroFocus} focus={focus} />
       <HomeRows focus={focus} />
       <View className="mt-6">
         <Text className="mb-3 text-lg font-semibold">Bibliotheken</Text>

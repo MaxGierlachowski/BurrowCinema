@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Text } from '@/components/ui/text'
 import { isTV } from '@/lib/tv'
+import { cn } from '@/lib/utils'
 
 type Props = {
   title: string
@@ -28,6 +29,9 @@ type Props = {
   actions?: ReactNode
   children?: ReactNode
 }
+
+/** Side padding; TVs keep text and buttons out of the overscan area at the screen edges. */
+const PAD = isTV ? 'px-12' : 'px-4'
 
 /** Same as the web: 38% of the screen height, at least 14rem. */
 function useBackdropHeight() {
@@ -85,7 +89,7 @@ export function DetailLayout(props: Props) {
           />
         </View>
 
-        <View className="-mt-28 flex-row gap-x-4 px-4">
+        <View className={cn('-mt-28 flex-row gap-x-4', PAD)}>
           <View className="aspect-[2/3] w-28 overflow-hidden rounded-xl border border-white/10 bg-muted">
             <Poster src={poster} title={title} />
           </View>
@@ -97,7 +101,7 @@ export function DetailLayout(props: Props) {
           </View>
         </View>
 
-        <View className="mt-6 gap-5 px-4">
+        <View className={cn('mt-6 gap-5', PAD)}>
           {actions && <View className="flex-row flex-wrap gap-2">{actions}</View>}
           {!!genres?.length && (
             <View className="flex-row flex-wrap gap-1.5">
@@ -112,7 +116,7 @@ export function DetailLayout(props: Props) {
           {overview && <Text className="leading-relaxed text-muted-foreground">{overview}</Text>}
         </View>
 
-        <View className="px-4">{children}</View>
+        <View className={PAD}>{children}</View>
       </ScrollView>
       <BackButton />
     </View>
@@ -126,7 +130,7 @@ export function DetailSkeleton() {
       <View style={{ height }}>
         <Skeleton className="size-full rounded-none" />
       </View>
-      <View className="-mt-28 flex-row gap-4 px-4">
+      <View className={cn('-mt-28 flex-row gap-4', PAD)}>
         <Skeleton className="aspect-[2/3] w-28 rounded-xl" />
         <View className="flex-1 gap-3 self-end">
           <Skeleton className="h-8 w-2/3" />
@@ -142,7 +146,7 @@ export function DetailSkeleton() {
 export function DetailMessage({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets()
   return (
-    <View className="flex-1 bg-background px-4" style={{ paddingTop: insets.top + 64 }}>
+    <View className={cn('flex-1 bg-background', PAD)} style={{ paddingTop: insets.top + 64 }}>
       {children}
       <BackButton />
     </View>

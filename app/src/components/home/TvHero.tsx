@@ -8,7 +8,7 @@ import { useSession } from '@shared/hooks/useAuth'
 import { backdropUrl, type BaseItem } from '@shared/jellyfin'
 import { shouldOfferResume } from '@shared/playback'
 import { colors } from '@shared/theme'
-import { useLatest, useLibraryViews, useResume } from '@/components/home/HomeRows'
+import { useLatest, useLibraryViews, useResume, type FocusMemory } from '@/components/home/HomeRows'
 import { episodeCode, ProgressBar, progressPercent } from '@/components/media/MediaCard'
 import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
@@ -20,12 +20,13 @@ function useHeroItem(): BaseItem | undefined {
   const resume = useResume()
   const views = useLibraryViews()
   const movies = views.data?.find((view) => view.CollectionType === 'movies')
-  const latest = useLatest(resume.data?.length ? undefined : movies?.Id)
+  // Only fall back once Weiterschauen is known, so the hero does not switch titles while loading.
+  const latest = useLatest(resume.isPending || resume.data?.length ? undefined : movies?.Id)
   return resume.data?.[0] ?? latest.data?.[0]
 }
 
 /** Big featured title at the top of the TV home with "Fortsetzen"/"Abspielen" and "Details". */
-export function TvHero({ preferredFocus }: { preferredFocus?: boolean }) {
+export function TvHero({ preferredFocus, focus }: { preferredFocus?: boolean; focus: FocusMemory }) {
   const session = useSession()
   const { height } = useWindowDimensions()
   const item = useHeroItem()
@@ -70,8 +71,11 @@ export function TvHero({ preferredFocus }: { preferredFocus?: boolean }) {
           {features.player && (
             <Button
               icon={Play}
-              preferredFocus={preferredFocus}
-              onPress={() => router.push(playHref(item.Id, { start: resume ? 'resume' : 'beginning' }))}
+              preferredFocus={preferredFocus || focus.preferred('hero:play')}
+              onPress={() => {
+                focus.remember('hero:play')
+                router.push(playHref(item.Id, { start: resume ? 'resume' : 'beginning' }))
+              }}
             >
               {resume ? 'Fortsetzen' : 'Abspielen'}
             </Button>
@@ -79,8 +83,11 @@ export function TvHero({ preferredFocus }: { preferredFocus?: boolean }) {
           <Button
             variant="secondary"
             icon={Info}
-            preferredFocus={preferredFocus && !features.player}
-            onPress={() => router.push(itemHref(item.Id))}
+            preferredFocus={(preferredFocus && !features.player) || focus.preferred('hero:details')}
+            onPress={() => {
+              focus.remember('hero:details')
+              router.push(itemHref(item.Id))
+            }}
           >
             Details
           </Button>

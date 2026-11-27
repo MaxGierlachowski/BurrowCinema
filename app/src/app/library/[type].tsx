@@ -12,8 +12,14 @@ export default function LibraryScreen() {
   const series = type === 'Series'
   return (
     // Phones: room for the floating back button above the title.
-    <View className="flex-1 bg-background" style={{ paddingTop: isTV ? 16 : insets.top + 48 }}>
-      <LibraryGrid key={type} title={series ? 'Serien' : 'Filme'} type={series ? 'Series' : 'Movie'} paddingBottom={insets.bottom + 24} />
+    <View className="flex-1 bg-background" style={{ paddingTop: isTV ? 24 : insets.top + 48 }}>
+      <LibraryGrid
+        key={type}
+        title={series ? 'Serien' : 'Filme'}
+        type={series ? 'Series' : 'Movie'}
+        paddingBottom={insets.bottom + 24}
+        focusFirst={isTV}
+      />
       <BackButton />
     </View>
   )

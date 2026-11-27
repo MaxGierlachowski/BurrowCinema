@@ -82,9 +82,10 @@ export const PosterCard = memo(function PosterCard({ item, badge, action, prefer
   )
 })
 
-/** Same breakpoints as the web grid: 3 columns on phones, more on tablets. */
+/** Same breakpoints as the web grid: 3 columns on phones, more on tablets. TVs (960 dp wide at 1080p) get smaller posters. */
 export function useGridColumns() {
   const { width } = useWindowDimensions()
+  if (isTV) return Math.max(6, Math.round(width / 160))
   return width < 600 ? 3 : width < 900 ? 4 : width < 1200 ? 5 : 6
 }
 
@@ -115,7 +116,8 @@ export function PosterGrid<T>({
   ...props
 }: GridProps<T>) {
   const columns = useGridColumns()
-  const style = { paddingHorizontal: 10, ...contentContainerStyle }
+  // TV: keep posters out of the overscan area at the screen edges.
+  const style = { paddingHorizontal: isTV ? 40 : 10, ...contentContainerStyle }
   if (isTV) {
     return (
       <FlatList

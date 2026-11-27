@@ -1,7 +1,7 @@
 import { FlashList } from '@shopify/flash-list'
 import { FolderHeart, Plus } from 'lucide-react-native'
 import { useState } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { FlatList, useWindowDimensions, View } from 'react-native'
 import { useFolders } from '@shared/hooks/useFolders'
 import { EmptyState } from '@/components/EmptyState'
 import { FolderCard } from '@/components/folders/FolderCard'
@@ -9,6 +9,7 @@ import { NameSheet } from '@/components/folders/NameSheet'
 import { PageHeader, Screen } from '@/components/Screen'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { isTV } from '@/lib/tv'
 
 function useFolderColumns() {
   const { width } = useWindowDimensions()
@@ -38,42 +39,62 @@ export default function Folders() {
     </Button>
   )
 
+  const header = (
+    <View className="px-2">
+      <PageHeader title="Ordner" subtitle="Eigene Sammlungen, auch mit Titeln, die noch fehlen">
+        {folders.length > 0 && createButton}
+      </PageHeader>
+    </View>
+  )
+  const empty = isLoading ? (
+    <FoldersSkeleton columns={columns} />
+  ) : (
+    <View className="px-2">
+      <EmptyState
+        icon={FolderHeart}
+        title="Noch keine Ordner"
+        text="Leg einen Ordner an, zum Beispiel „Filmabend“ oder „Watchlist“, und füge Titel über ihre Detailseite hinzu."
+      >
+        {createButton}
+      </EmptyState>
+    </View>
+  )
+
   return (
     <Screen>
-      <FlashList
-        data={isLoading ? [] : folders}
-        key={columns}
-        numColumns={columns}
-        keyExtractor={(folder) => folder.id}
-        renderItem={({ item }) => (
-          <View className="px-2 pb-4">
-            <FolderCard folder={item} />
-          </View>
-        )}
-        contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 24 }}
-        ListHeaderComponent={
-          <View className="px-2">
-            <PageHeader title="Ordner" subtitle="Eigene Sammlungen, auch mit Titeln, die noch fehlen">
-              {folders.length > 0 && createButton}
-            </PageHeader>
-          </View>
-        }
-        ListEmptyComponent={
-          isLoading ? (
-            <FoldersSkeleton columns={columns} />
-          ) : (
-            <View className="px-2">
-              <EmptyState
-                icon={FolderHeart}
-                title="Noch keine Ordner"
-                text="Leg einen Ordner an, zum Beispiel „Filmabend“ oder „Watchlist“, und füge Titel über ihre Detailseite hinzu."
-              >
-                {createButton}
-              </EmptyState>
+      {isTV ? (
+        // TV: FlatList without clipping, FlashList recycling loses the D pad focus (same as PosterGrid).
+        <FlatList
+          data={isLoading ? [] : folders}
+          key={columns}
+          numColumns={columns}
+          keyExtractor={(folder) => folder.id}
+          renderItem={({ item }) => (
+            <View className="px-2 pt-2 pb-4" style={{ width: `${100 / columns}%` }}>
+              <FolderCard folder={item} />
             </View>
-          )
-        }
-      />
+          )}
+          removeClippedSubviews={false}
+          contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 24 }}
+          ListHeaderComponent={header}
+          ListEmptyComponent={empty}
+        />
+      ) : (
+        <FlashList
+          data={isLoading ? [] : folders}
+          key={columns}
+          numColumns={columns}
+          keyExtractor={(folder) => folder.id}
+          renderItem={({ item }) => (
+            <View className="px-2 pb-4">
+              <FolderCard folder={item} />
+            </View>
+          )}
+          contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 24 }}
+          ListHeaderComponent={header}
+          ListEmptyComponent={empty}
+        />
+      )}
       <NameSheet title="Neuer Ordner" confirmLabel="Anlegen" open={creating} onOpenChange={setCreating} onSubmit={(name) => create(name)} />
     </Screen>
   )

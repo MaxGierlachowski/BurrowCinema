@@ -11,7 +11,9 @@ export const sidebarStyle = {
   flexDirection: 'column',
   justifyContent: 'flex-start',
   gap: 4,
-  paddingHorizontal: 16,
+  // Inside the TV overscan safe area (about 5 % of the screen).
+  paddingLeft: 24,
+  paddingRight: 12,
   paddingVertical: 32,
   backgroundColor: colors.card,
   borderRightWidth: 1,
