@@ -106,7 +106,8 @@ const SUBTITLE_TYPES: Record<string, SubtitleTrack['mimeType']> = {
 }
 
 function externalSubtitle(s: Session, stream: MediaStream): SubtitleTrack | undefined {
-  if (stream.DeliveryMethod !== 'External' || !stream.DeliveryUrl) return undefined
+  // Subtitles hosted elsewhere are skipped: the player sends the Jellyfin auth header with every request of the source.
+  if (stream.DeliveryMethod !== 'External' || !stream.DeliveryUrl || stream.IsExternalUrl) return undefined
   const extension = stream.DeliveryUrl.split('?')[0].split('.').pop()?.toLowerCase() ?? ''
   const mimeType = SUBTITLE_TYPES[extension]
   if (!mimeType) return undefined
@@ -115,7 +116,7 @@ function externalSubtitle(s: Session, stream: MediaStream): SubtitleTrack | unde
     title: `jf-${stream.Index}`,
     label: streamLabel(stream),
     language: stream.Language,
-    uri: stream.IsExternalUrl ? stream.DeliveryUrl : withApiKey(s, s.server + stream.DeliveryUrl),
+    uri: withApiKey(s, s.server + stream.DeliveryUrl),
     mimeType,
   }
 }
@@ -160,7 +161,8 @@ export function resolvePlayback(s: Session, info: PlaybackInfoResponse, req: Pla
   const subtitleStreams = streams.filter((m) => m.Type === 'Subtitle')
   return {
     url,
-    headers: { Authorization: authHeader(s.token), ...source.RequiredHttpHeaders },
+    // The Jellyfin token only goes to our own server; remote sources and external subtitles must never see it.
+    headers: url.startsWith(s.server) ? { Authorization: authHeader(s.token), ...source.RequiredHttpHeaders } : { ...source.RequiredHttpHeaders },
     playMethod,
     playSessionId: info.PlaySessionId,
     mediaSource: source,

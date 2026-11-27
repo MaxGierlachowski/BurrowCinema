@@ -2,7 +2,7 @@
  * The only file that imports the video library. Everything else talks to this small, library free interface,
  * so switching to expo-video means replacing this file (and setting caps.sidecarSubtitles = false).
  */
-import { useImperativeHandle, useMemo, useRef, type Ref } from 'react'
+import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import { Platform, StyleSheet } from 'react-native'
 import Video, {
   SelectedTrackType,
@@ -57,9 +57,15 @@ const FONT_SIZE: Record<PlaybackSettings['subtitleSize'], number> = { small: 16,
 export function VideoSurface(props: Props) {
   const { uri, headers, isHls, startSeconds, textTracks, selectedSubtitleTitle, audioTrackPosition, subtitleSize, ref } = props
   const video = useRef<VideoRef>(null)
+  // Android 12+ keeps "enter PiP on leave" per activity, and a released player (the previous episode) turns it off.
+  // Applying it only after this player loaded switches it back on for this one.
+  const [loaded, setLoaded] = useState(false)
 
   useImperativeHandle(ref, () => ({
-    seek: (seconds) => video.current?.seek(seconds),
+    // The library's seek rejects (unhandled) for NaN.
+    seek: (seconds) => {
+      if (Number.isFinite(seconds)) video.current?.seek(seconds)
+    },
     enterPip: () => video.current?.enterPictureInPicture(),
   }))
 
@@ -103,11 +109,14 @@ export function VideoSurface(props: Props) {
       selectedTextTrack={textTrack}
       selectedAudioTrack={audioTrack}
       subtitleStyle={subtitleStyle}
-      enterPictureInPictureOnLeave={props.pip}
+      enterPictureInPictureOnLeave={props.pip && loaded}
       playInBackground={false}
       progressUpdateInterval={1000}
       shutterColor="black"
-      onLoad={(e) => props.onLoad({ duration: e.duration, currentTime: e.currentTime })}
+      onLoad={(e) => {
+        setLoaded(true)
+        props.onLoad({ duration: e.duration, currentTime: e.currentTime })
+      }}
       onProgress={(e) => props.onProgress(e.currentTime)}
       onPlaybackStateChanged={(e) => props.onPlayingChange?.(e.isPlaying)}
       onBuffer={(e) => props.onBuffering(e.isBuffering)}
@@ -125,5 +134,9 @@ export async function probeDecoders() {
     VideoDecoderProperties.isHEVCSupported(),
     VideoDecoderProperties.isCodecSupported('video/av01', 1920, 1080),
   ])
-  return { hevc: hevc !== 'unsupported', av1: av1 === 'hardware' }
+  // react-native-video 6.19.3 swaps the answers on Android 10+ (VideoDecoderInfoModule: hardware -> 'software' and
+  // software -> 'hardware'); below Android 10 every decoder it finds is 'software'. So a hardware AV1 decoder reads
+  // 'software' on Android 10+, and the software decoder every device ships must not count.
+  const av1Hardware = typeof Platform.Version === 'number' && Platform.Version >= 29 && av1 === 'software'
+  return { hevc: hevc !== 'unsupported', av1: av1Hardware }
 }

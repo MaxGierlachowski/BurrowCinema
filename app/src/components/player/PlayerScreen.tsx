@@ -12,6 +12,7 @@ import {
   audioTrackPosition,
   BITRATE_OPTIONS,
   getPlaybackSettings,
+  PROGRESS_INTERVAL_MS,
   rememberTracks,
   SEGMENT_LABEL,
   secondsToTicks,
@@ -158,6 +159,8 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
   }
   const playEpisode = (episode: BaseItem) => {
     void reporter.stop()
+    // The old player stays mounted during the screen transition; it must not keep playing under the new one.
+    setPaused(true)
     router.replace(playHref(episode.Id))
   }
 
@@ -175,6 +178,13 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
   }, [seekHint])
 
   useEffect(() => reporter.setPaused(paused), [reporter, paused])
+
+  // The player sends no progress events while paused; keep the session (and a transcode) alive on the server.
+  useEffect(() => {
+    if (!paused) return
+    const timer = setInterval(() => reporter.now(), PROGRESS_INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [reporter, paused])
 
   // Keep the screen on only while playing, so the TV screensaver still starts when paused.
   // The tag is per item: the next episode activates its own before the old player releases.
@@ -302,7 +312,14 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
     showControls()
   }
 
-  const overlay = upNext.visible ? 'card' : segment ? 'skip' : 'none'
+  const controlsShown = controls && !panel && !pipActive && !upNext.stillWatching
+  // An unmounted seek bar never reports its blur; without this, left and right would keep seeking next time.
+  useEffect(() => {
+    if (!controlsShown) setSeekBarFocused(false)
+  }, [controlsShown])
+
+  // "Schaust du noch?" owns Select and left/right like the Up Next card.
+  const overlay = upNext.visible || upNext.stillWatching ? 'card' : segment ? 'skip' : 'none'
   const pending = usePlayerKeys({
     controlsVisible: controls && !panel,
     panelOpen: !!panel,
@@ -327,7 +344,7 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
       closePanel()
       return true
     }
-    if (isTV && (controls || seekHint)) {
+    if (isTV && (controlsShown || seekHint)) {
       setControls(false)
       setSeekHint(0)
       return true
@@ -338,7 +355,7 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
   const onError = (message: string) => {
     if (negotiation.fallback(secondsToTicks(position))) return
     void reporter.stop(true)
-    negotiation.setError(message)
+    negotiation.setError(`Der Player hat die Wiedergabe abgebrochen (${message}).`)
   }
 
   const isEpisode = item.Type === 'Episode'
@@ -350,7 +367,6 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
       ? audioTrackPosition(resolved.mediaSource, resolved.audioStreamIndex)
       : undefined
   const externalTitle = resolved.externalSubtitles.find((t) => t.streamIndex === resolved.subtitleStreamIndex)?.title
-  const controlsShown = controls && !panel && !pipActive && !upNext.stillWatching
   const Controls = isTV ? TvControls : PhoneControls
   const insets = useSafeAreaInsets()
   const segmentLabel = segment && segment.Type !== 'Unknown' ? SEGMENT_LABEL[segment.Type] : undefined
@@ -452,11 +468,14 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
           className="absolute items-end gap-3"
           style={{ right: insets.right + (isTV ? 56 : 24), bottom: insets.bottom + (controlsShown ? (isTV ? 180 : 120) : isTV ? 56 : 32) }}
         >
-          {segmentLabel && !upNext.visible && <SkipSegmentButton label={segmentLabel} onPress={() => segment && skipSegment(segment)} />}
+          {segmentLabel && !upNext.visible && (
+            <SkipSegmentButton label={segmentLabel} focus={!controlsShown} onPress={() => segment && skipSegment(segment)} />
+          )}
           {upNext.visible && nextEpisode && (
             <UpNextCard
               episode={nextEpisode}
               secondsLeft={upNext.autoPlay ? upNext.secondsLeft : undefined}
+              focus={!controlsShown}
               onPlay={upNext.playNow}
               onCancel={upNext.cancel}
             />

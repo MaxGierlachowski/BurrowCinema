@@ -49,6 +49,16 @@ export function useUpNext(session: Session, item: BaseItem, { position, duration
     latest.current = onPlay
   })
 
+  // Leaving the player any other way than by auto play (back, close, a chosen episode) starts the count again,
+  // so the next session from the library does not ask "Schaust du noch?" right away.
+  const autoPlayed = useRef(false)
+  useEffect(
+    () => () => {
+      if (!autoPlayed.current) noteInteraction()
+    },
+    [],
+  )
+
   useEffect(() => {
     if (!visible) setSecondsLeft(settings.autoPlayNextSeconds)
   }, [visible, settings.autoPlayNextSeconds])
@@ -65,6 +75,7 @@ export function useUpNext(session: Session, item: BaseItem, { position, duration
     if (!due || !next) return
     if (autoPlayedInRow >= STILL_WATCHING_AFTER) return setStillWatching(true)
     autoPlayedInRow++
+    autoPlayed.current = true
     latest.current(next)
   }, [due, next])
 

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { BaseItem, Session } from '@shared/jellyfin'
+import type { DeviceCaps } from '@shared/deviceProfile'
+import { JellyfinError, type BaseItem, type Session } from '@shared/jellyfin'
 import {
   applyTrackChoice,
   needsRenegotiation,
+  PlaybackError,
   recallTracks,
   startPlayback,
   startTicksFor,
@@ -20,7 +22,26 @@ export const trackKey = (item: BaseItem) => item.SeriesId ?? item.Id
 
 export type TrackChange = { audioStreamIndex?: number; subtitleStreamIndex?: number }
 
-const errorText = (error: unknown) => (error instanceof Error ? error.message : 'Wiedergabe fehlgeschlagen')
+// Our own errors are German; anything else (fetch's "Network request failed", broken JSON) is a connection problem.
+const errorText = (error: unknown) =>
+  error instanceof PlaybackError || error instanceof JellyfinError ? error.message : 'Verbindung zu Jellyfin fehlgeschlagen'
+
+/** Audio codecs the device profile direct plays (shared/deviceProfile.ts), AC 3 and E AC 3 only with caps.ac3. */
+const DIRECT_AUDIO = new Set(['aac', 'mp3', 'opus', 'vorbis', 'flac', 'pcm_s16le', 'pcm_s24le'])
+const DOLBY_AUDIO = new Set(['ac3', 'eac3'])
+
+/**
+ * Jellyfin only checks the selected audio track for direct play. Switching inside the player to a track the device
+ * cannot decode (DTS, TrueHD, an external file) would play silently, so that switch goes to the server instead.
+ */
+function audioNeedsServer(current: ResolvedPlayback, caps: DeviceCaps, streamIndex?: number) {
+  if (current.playMethod === 'Transcode' || streamIndex === undefined || streamIndex === current.audioStreamIndex) return false
+  const stream = current.audioStreams.find((m) => m.Index === streamIndex)
+  const codec = stream?.Codec?.toLowerCase()
+  if (!stream) return false
+  if (stream.IsExternal) return true
+  return !!codec && !DIRECT_AUDIO.has(codec) && !(caps.ac3 && DOLBY_AUDIO.has(codec))
+}
 
 /**
  * Negotiates the stream (PlaybackInfo) and renegotiates at the current position when a track or the quality
@@ -32,6 +53,8 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
   const current = useRef<ResolvedPlayback | undefined>(undefined)
   const lastRequest = useRef<PlaybackRequest | undefined>(undefined)
   const fellBack = useRef(false)
+  // Only the latest renegotiation may replace the stream (two quick changes, or leaving the player meanwhile).
+  const generation = useRef(0)
   const latest = useRef({ item, params, settings })
 
   useEffect(() => {
@@ -66,11 +89,19 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
     }
   }, [session, itemId])
 
+  useEffect(
+    () => () => {
+      generation.current++
+    },
+    [],
+  )
+
   const renegotiate = useCallback(
     async (change: Partial<PlaybackRequest>, positionTicks: number) => {
       const old = current.current
       const base = lastRequest.current
       if (!old || !base) return
+      const run = ++generation.current
       const request: PlaybackRequest = {
         ...base,
         mediaSourceId: old.mediaSource.Id,
@@ -81,12 +112,13 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
       }
       try {
         const resolved = await startPlayback(session, request)
+        if (run !== generation.current) return
         if (old.playMethod === 'Transcode') stopTranscode(session, old.playSessionId).catch(ignore)
         lastRequest.current = request
         current.current = resolved
         setPlayback(resolved)
       } catch (e) {
-        setError(errorText(e))
+        if (run === generation.current) setError(errorText(e))
       }
     },
     [session],
@@ -97,7 +129,9 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
     (change: TrackChange, positionTicks: number) => {
       const old = current.current
       if (!old) return
-      if (needsRenegotiation(old, change)) return void renegotiate(change, positionTicks)
+      const caps = lastRequest.current?.caps
+      const server = needsRenegotiation(old, change) || (!!caps && audioNeedsServer(old, caps, change.audioStreamIndex))
+      if (server) return void renegotiate(change, positionTicks)
       const next = { ...old, ...change }
       current.current = next
       setPlayback(next)
@@ -106,7 +140,9 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
   )
 
   const changeQuality = useCallback(
-    (maxBitrate: number, positionTicks: number) => void renegotiate({ maxBitrate }, positionTicks),
+    (maxBitrate: number, positionTicks: number) => {
+      if (maxBitrate !== lastRequest.current?.maxBitrate) void renegotiate({ maxBitrate }, positionTicks)
+    },
     [renegotiate],
   )
 

@@ -10,10 +10,10 @@ import { FocusGuide } from '@/lib/tv'
 export const episodeCode = (item: BaseItem) =>
   item.ParentIndexNumber !== undefined && item.IndexNumber !== undefined ? `S${item.ParentIndexNumber}:F${item.IndexNumber}` : undefined
 
-type Props = { episode: BaseItem; secondsLeft?: number; onPlay: () => void; onCancel: () => void }
+type Props = { episode: BaseItem; secondsLeft?: number; focus: boolean; onPlay: () => void; onCancel: () => void }
 
-/** "Nächste Folge" card with optional countdown. */
-export function UpNextCard({ episode, secondsLeft, onPlay, onCancel }: Props) {
+/** "Nächste Folge" card with optional countdown. On TV "Jetzt abspielen" takes the focus while the controls are hidden. */
+export function UpNextCard({ episode, secondsLeft, focus, onPlay, onCancel }: Props) {
   const session = useSession()
   const image = thumbUrl(session, episode, 400)
   return (
@@ -29,7 +29,7 @@ export function UpNextCard({ episode, secondsLeft, onPlay, onCancel }: Props) {
         </View>
       </View>
       <View className="flex-row gap-2">
-        <Button size="sm" icon={Play} preferredFocus onPress={onPlay} className="flex-1">
+        <Button size="sm" icon={Play} preferredFocus={focus} onPress={onPlay} className="flex-1">
           Jetzt abspielen
         </Button>
         <Button size="sm" variant="secondary" onPress={onCancel}>
