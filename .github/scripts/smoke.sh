@@ -13,7 +13,9 @@ for run in 1 2; do
   adb shell screencap -p /sdcard/shot.png && adb pull /sdcard/shot.png "smoke-screen-$run.png" > /dev/null || true
   echo "===== run $run: app process ====="
   adb shell pidof "$PKG" || echo "APP NOT RUNNING"
+  echo "===== run $run: visible texts ====="
+  adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1 && adb shell cat /sdcard/ui.xml | grep -o 'text="[^"]\+"' | head -40
   echo "===== run $run: crashes and errors ====="
-  grep -E "FATAL|AndroidRuntime|ReactNativeJS|ReactNative|DEBUG  |libc  |Abort|SIGSEGV|SIGABRT|$PKG|Expo" "smoke-logcat-$run.txt" | grep -v "ActivityManager: Process .* has died" | tail -150
+  grep -E "FATAL|E AndroidRuntime|ReactNativeJS|E ReactNative|DEBUG  |SIGSEGV|SIGABRT" "smoke-logcat-$run.txt" | grep -v "ActivityManager: Process .* has died" | tail -150
 done
 exit 0

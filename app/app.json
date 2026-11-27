@@ -48,7 +48,8 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "extraProguardRules": "# WorkManager (used by expo-background-task) creates its Room database by reflection;\n# without these rules R8 removes the constructor and the app crashes before it starts.\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.** { *; }"
           }
         }
       ],
