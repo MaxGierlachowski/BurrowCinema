@@ -4,21 +4,40 @@ import '../global.css'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useQuery } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
-import { Stack } from 'expo-router'
+import { Stack, type ErrorBoundaryProps } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
+import { View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { Toaster } from 'sonner-native'
 import { rememberBundledServer } from '@shared/draws'
 import { AuthProvider, useAuth } from '@shared/hooks/useAuth'
 import { colors } from '@shared/theme'
 import { syncSettings } from '@shared/userSettings'
+import { Button } from '@/components/ui/button'
+import { Text } from '@/components/ui/text'
 import { persistOptions, queryClient } from '@/lib/queryClient'
 // Auslosung: defines the background task at module level, registers it and opens tapped notifications.
 import { useDrawNotifications } from '@/lib/backgroundTask'
 
 SplashScreen.preventAutoHideAsync()
+
+/** Errors while rendering a screen show a message with retry instead of closing the app. */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    SplashScreen.hideAsync()
+  }, [])
+  return (
+    <View className="flex-1 justify-center gap-4 bg-background px-6">
+      <Text className="text-2xl font-bold">Etwas ist schiefgelaufen</Text>
+      <Text selectable className="text-sm text-muted-foreground">
+        {error.message}
+      </Text>
+      <Button onPress={retry}>Erneut versuchen</Button>
+    </View>
+  )
+}
 
 function RootNavigator() {
   const { session } = useAuth()
