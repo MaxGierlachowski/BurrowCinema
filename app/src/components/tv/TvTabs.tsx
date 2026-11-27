@@ -55,7 +55,7 @@ export function TvTabs() {
           <SidebarItem icon={Settings} label="Einstellungen" />
         </TabTrigger>
       </TabList>
-      <TabSlot />
+      <TabSlot style={{ flex: 1 }} />
     </Tabs>
   )
 }

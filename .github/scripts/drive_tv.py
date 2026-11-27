@@ -1,9 +1,13 @@
 """Android TV smoke driver: only D pad, back and media keys, like a remote. Used by smoke.sh tv."""
-import time
-from drive import (SECOND, alive, check, finish, find, hide_keyboard, key, label, nodes, report, reports, sh, step, wait_for,
-                   wait_report)
+import re, time
+from drive import (PKG, SECOND, alive, check, finish, find, hide_keyboard, key, label, nodes, report, reports, sh, step, texts,
+                   wait_for, wait_report)
 
 SIDEBAR = {'Start', 'Suche', 'Filme', 'Serien', 'Ordner', 'Einstellungen'}
+
+
+def in_front():
+    return PKG in ''.join(re.findall(r'ResumedActivity.*', sh('dumpsys', 'activity', 'activities')))
 
 
 def focused():
@@ -14,6 +18,10 @@ def focused():
     return []
 
 
+def shows(labels, text):
+    return any(text in t for t in labels)
+
+
 def in_sidebar(labels):
     return any(t in SIDEBAR for t in labels)
 
@@ -21,7 +29,7 @@ def in_sidebar(labels):
 def focus_to(text, direction, presses=12):
     """Presses the direction until a focused node shows the text."""
     for _ in range(presses + 1):
-        if text in focused():
+        if shows(focused(), text):
             return True
         key(f'KEYCODE_DPAD_{direction}')
     return False
@@ -35,13 +43,13 @@ def scan_for(text, rows=4, presses=6):
         for _ in range(presses):
             key('KEYCODE_DPAD_LEFT')
             current = focused()
-            if text in current:
+            if shows(current, text):
                 return True
             if in_sidebar(current):
                 key('KEYCODE_DPAD_RIGHT')
                 break
         key('KEYCODE_DPAD_DOWN')
-    return text in focused()
+    return shows(focused(), text)
 
 
 def login():
@@ -68,13 +76,13 @@ def login():
     if not check('focus Mit Quick Connect anmelden', focus_to('Mit Quick Connect anmelden', 'DOWN')):
         return False
     key('KEYCODE_DPAD_CENTER')
-    check('Quick Connect code 482913 shown', wait_for('482913', 10))
+    check('Quick Connect code 482913 shown', wait_for('482913', 5), must=False)  # visible for about 3 s only
     return check('home after Quick Connect', wait_for('Weiterschauen', 15))
 
 
 def home():
     step('home')
-    found = [t for n in nodes() for t in [label(n)] if t]
+    found = texts()
     for title in ['Start', 'Suche', 'Filme', 'Serien', 'Ordner', 'Einstellungen']:
         check(f'sidebar label {title}', title in found)
     for title in ['Weiterschauen', 'Nächste Folgen', 'Zuletzt hinzugefügt: Filme']:
@@ -96,8 +104,8 @@ def resume_arrival():
     if not check('focus Arrival', scan_for('Arrival'), str(focused())):
         return False
     key('KEYCODE_DPAD_CENTER', pause=4)
-    check('detail has Fortsetzen focused', 'Fortsetzen' in focused(), str(focused()))
-    if 'Fortsetzen' not in focused() and not focus_to('Fortsetzen', 'DOWN', 4):
+    check('detail has Fortsetzen focused', shows(focused(), 'Fortsetzen'), str(focused()))
+    if not focus_to('Fortsetzen', 'DOWN', 4):
         return False
     key('KEYCODE_DPAD_CENTER')
     first = wait_report(lambda r: reports(r, 'm1', ('playing',)), 25)
@@ -140,11 +148,11 @@ def resume_arrival():
 def back_home():
     step('back to home')
     key('KEYCODE_BACK', pause=3)
-    check('home focuses Arrival again', 'Arrival' in focused(), str(focused()))
+    check('home focuses Arrival again', shows(focused(), 'Arrival'), str(focused()))
     key('KEYCODE_BACK', pause=0.5)
     check('exit hint shown', find('Zum Beenden erneut Zurück drücken'), must=False)  # the hint shows for 2 s only
     time.sleep(1)
-    check('app still running after one back on home', alive())
+    check('app still in front after one back on home', in_front())
 
 
 if __name__ == '__main__':
