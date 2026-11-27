@@ -4,6 +4,7 @@ set -u
 APK=app/android/app/build/outputs/apk/release/app-release.apk
 PKG=app.burrowcinema
 
+node .github/scripts/mock-jellyfin.cjs > smoke-mock.txt 2>&1 &
 adb install -r "$APK"
 for run in 1 2; do
   adb logcat -c
@@ -18,4 +19,11 @@ for run in 1 2; do
   echo "===== run $run: crashes and errors ====="
   grep -E "FATAL|E AndroidRuntime|ReactNativeJS|E ReactNative|DEBUG  |SIGSEGV|SIGABRT" "smoke-logcat-$run.txt" | grep -v "ActivityManager: Process .* has died" | tail -150
 done
+
+echo "===== login and navigate ====="
+adb logcat -c
+python3 .github/scripts/drive.py
+adb logcat -d > smoke-logcat-navigation.txt
+echo "===== navigation: crashes and errors ====="
+grep -E "FATAL|E AndroidRuntime|E ReactNativeJS|E ReactNative|DEBUG  |SIGSEGV|SIGABRT" smoke-logcat-navigation.txt | tail -120
 exit 0
