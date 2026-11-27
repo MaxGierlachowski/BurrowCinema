@@ -50,3 +50,41 @@ for tab in ['Suche', 'Auslosung', 'Ordner', 'Einstellungen', 'Bibliothek']:
 tap_text('Dune')
 time.sleep(5)
 print('== detail Dune, alive:', alive(), texts()[:20])
+
+def tap_desc(desc):
+    found = [n for n in nodes() if f'content-desc="{desc}"' in n]
+    if not found:
+        print(f'!! not found (desc): {desc}')
+        return False
+    sh('input', 'tap', *center(found[0]))
+    return True
+
+# Bottom sheets: add the open title to a new folder, then open the folder actions.
+tap_text('Zu Ordner hinzufügen')
+time.sleep(3)
+print('== add to folder sheet, alive:', alive(), texts()[:15])
+field = [n for n in nodes() if 'android.widget.EditText' in n]
+if field:
+    sh('input', 'tap', *center(field[0]))
+    time.sleep(0.5)
+    sh('input', 'text', 'Filmabend')
+    sh('input', 'keyevent', '4')
+    time.sleep(1)
+    tap_text('Anlegen')
+    time.sleep(3)
+    print('== after create, alive:', alive(), texts()[:15])
+sh('input', 'keyevent', '4')  # close the sheet
+time.sleep(2)
+sh('input', 'keyevent', '4')  # back to the library
+time.sleep(2)
+tap_text('Ordner', last=True)
+time.sleep(4)
+tap_text('Filmabend')
+time.sleep(4)
+print('== folder screen, alive:', alive(), texts()[:15])
+tap_desc('Ordner Aktionen')
+time.sleep(3)
+print('== folder actions sheet, alive:', alive(), texts()[:15])
+tap_text('Umbenennen')
+time.sleep(3)
+print('== rename sheet, alive:', alive(), texts()[:15])

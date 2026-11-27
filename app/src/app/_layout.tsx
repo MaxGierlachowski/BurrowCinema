@@ -1,7 +1,6 @@
 import '@/lib/platform'
 import '../global.css'
 
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useQuery } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { Stack, type ErrorBoundaryProps } from 'expo-router'
@@ -84,14 +83,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
         <AuthProvider>
-          <BottomSheetModalProvider>
-            <RootNavigator />
-            <Toaster
-              theme="dark"
-              position="top-center"
-              toastOptions={{ style: { backgroundColor: colors.popover, borderColor: colors.border, borderWidth: 1 } }}
-            />
-          </BottomSheetModalProvider>
+          <RootNavigator />
+          <Toaster
+            theme="dark"
+            position="top-center"
+            toastOptions={{ style: { backgroundColor: colors.popover, borderColor: colors.border, borderWidth: 1 } }}
+          />
         </AuthProvider>
       </PersistQueryClientProvider>
       <StatusBar style="light" />

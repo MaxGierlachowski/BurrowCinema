@@ -11,7 +11,7 @@ Native App zur Web App im Hauptordner. Plan und Begründung: [../docs/expo-plan.
 **Styling.** Tailwind Klassen über `className` (Uniwind, Tailwind 4). Farben nur über Tokens: `bg-background`, `bg-card`, `text-muted-foreground`, `bg-primary` usw. (siehe `src/global.css`). Wo ein Farbwert als Prop gebraucht wird (Icons, Gradients), `colors` aus `@shared/theme`. Kein `StyleSheet.create` mit eigenen Farben.
 
 **Bausteine** in `src/components`:
-* `ui/`: `Text`, `Button` (Varianten wie im Web, `icon` Prop, `loading`, Haptik eingebaut), `Badge`, `Input`, `Label`, `Card`, `Skeleton`, `Icon` (Lucide wie im Web), `Sheet` (Bottom Sheet statt Web Drawer), `SheetInput` (Eingabe innerhalb eines Sheets)
+* `ui/`: `Text`, `Button` (Varianten wie im Web, `icon` Prop, `loading`, Haptik eingebaut), `Badge`, `Input`, `Label`, `Card`, `Skeleton`, `Icon` (Lucide wie im Web), `Sheet` (Bottom Sheet auf Basis von `Modal`, statt Web Drawer), `SheetInput` (Eingabe innerhalb eines Sheets). Zwei Sheets nie gleichzeitig öffnen: erst schließen, dann nach etwa 300 ms das nächste öffnen
 * `Screen` und `PageHeader` für Tab Screens, `EmptyState`, `BurrowMark`, `Logo`
 * `PosterCard`, `Poster` (expo-image mit Cache), `PosterGrid` (FlashList, virtualisiert), `PosterGridSkeleton`
 * `settings/ArrForm`, `settings/DrawServerForm`

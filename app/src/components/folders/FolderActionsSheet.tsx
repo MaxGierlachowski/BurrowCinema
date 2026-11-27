@@ -13,9 +13,10 @@ type Props = {
 
 /** Native counterpart of the web folder dropdown menu. */
 export function FolderActionsSheet({ title, open, onOpenChange, onRename, onDelete }: Props) {
+  // Let this sheet fade out before the next one (rename) opens; two modals at once can swallow the second.
   const run = (action: () => void) => () => {
     onOpenChange(false)
-    action()
+    setTimeout(action, 300)
   }
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={title}>
