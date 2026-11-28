@@ -11,7 +11,7 @@ export function RemoveButton({ title, onPress }: { title: string; onPress: () =>
       variant="secondary"
       haptics={false}
       accessibilityLabel={`${title} entfernen`}
-      hitSlop={6}
+      hitSlop={8}
       className="size-7 rounded-full bg-black/60"
       onPress={() => {
         haptic.select()

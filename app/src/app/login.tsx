@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react-native'
+import { useRef, useState } from 'react'
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useAuth } from '@shared/hooks/useAuth'
@@ -9,7 +10,7 @@ import { Logo, PeekingEars } from '@/components/BurrowMark'
 import { errorText, QuickConnectPanel } from '@/components/login/QuickConnectPanel'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Input, type InputRef } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Text } from '@/components/ui/text'
 import { features } from '@/lib/features'
@@ -23,6 +24,9 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [quickConnect, setQuickConnect] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const usernameRef = useRef<InputRef>(null)
+  const passwordRef = useRef<InputRef>(null)
 
   const finish = (session: Session) => {
     save('bc.lastServer', session.server)
@@ -75,28 +79,51 @@ export default function Login() {
                       autoCapitalize="none"
                       autoCorrect={false}
                       keyboardType="url"
+                      returnKeyType="next"
+                      submitBehavior="submit"
+                      onSubmitEditing={() => usernameRef.current?.focus()}
                     />
                   </View>
                   <View>
                     <Label>Benutzername</Label>
                     <Input
+                      ref={usernameRef}
                       value={username}
                       onChangeText={setUsername}
                       autoCapitalize="none"
+                      autoCorrect={false}
                       autoComplete="username"
                       textContentType="username"
+                      returnKeyType="next"
+                      submitBehavior="submit"
+                      onSubmitEditing={() => passwordRef.current?.focus()}
                     />
                   </View>
                   <View>
                     <Label>Passwort</Label>
-                    <Input
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry
-                      autoComplete="current-password"
-                      textContentType="password"
-                      onSubmitEditing={submit}
-                    />
+                    <View className="justify-center">
+                      <Input
+                        ref={passwordRef}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={!showPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="current-password"
+                        textContentType="password"
+                        returnKeyType="go"
+                        onSubmitEditing={submit}
+                        className="pr-12"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        icon={showPassword ? EyeOff : Eye}
+                        accessibilityLabel={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                        onPress={() => setShowPassword((show) => !show)}
+                        className="absolute right-0.5"
+                      />
+                    </View>
                   </View>
                   {!!error && <Text className="text-sm text-destructive">{error}</Text>}
                   {features.quickConnect && (

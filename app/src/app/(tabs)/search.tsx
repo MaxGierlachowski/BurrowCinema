@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Search as SearchIcon } from 'lucide-react-native'
+import { CheckCircle2, Search as SearchIcon, X } from 'lucide-react-native'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ScrollView, View } from 'react-native'
 import { ARR_LABEL, getArrSettings, searchArr, type ArrKind } from '@shared/arr'
@@ -192,12 +192,15 @@ export default function Search() {
             placeholder="Filme und Serien suchen"
             returnKeyType="search"
             autoCorrect={false}
-            clearButtonMode="while-editing"
-            className="pl-11"
+            className="pl-11 pr-12"
           />
           <View pointerEvents="none" className="absolute left-3.5">
             <Icon as={SearchIcon} color="mutedForeground" />
           </View>
+          {!!input && (
+            // clearButtonMode is iOS only, so the clear button is drawn here.
+            <Button variant="ghost" size="icon" icon={X} accessibilityLabel="Suche löschen" onPress={() => setInput('')} className="absolute right-0.5" />
+          )}
         </View>
 
         {!searching && (
@@ -233,6 +236,15 @@ export default function Search() {
           </Section>
         )}
         {searching && library.isSuccess && <MoreResults term={term} />}
+        {searching && library.isError && (
+          <View className="mt-8">
+            <EmptyState icon={BurrowMark} title="Suche fehlgeschlagen" text={library.error.message}>
+              <Button variant="secondary" onPress={() => library.refetch()}>
+                Erneut versuchen
+              </Button>
+            </EmptyState>
+          </View>
+        )}
         {searching && library.isLoading && (
           <View className="mt-8">
             <Skeletons />

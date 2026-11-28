@@ -198,13 +198,19 @@ function ItemDetail({ id }: { id: string }) {
   const session = useSession()
   const { folders } = useFolders()
   const [sourceId, setSourceId] = useState<string>()
-  const { data: item, isLoading, error } = useQuery({ queryKey: qk.item(id), queryFn: () => getItem(session, id) })
+  const { data: item, isLoading, error, refetch } = useQuery({ queryKey: qk.item(id), queryFn: () => getItem(session, id) })
 
   if (isLoading) return <DetailSkeleton />
   if (!item) {
     return (
       <DetailMessage>
-        <EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text={error?.message ?? 'Titel nicht gefunden'} />
+        <EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text={error?.message ?? 'Titel nicht gefunden'}>
+          {error && (
+            <Button variant="secondary" preferredFocus onPress={() => refetch()}>
+              Erneut versuchen
+            </Button>
+          )}
+        </EmptyState>
       </DetailMessage>
     )
   }
@@ -222,7 +228,12 @@ function ItemDetail({ id }: { id: string }) {
       title={item.Name}
       kicker={
         isEpisode && item.SeriesId ? (
-          <Focusable accessibilityRole="link" onPress={() => router.push(itemHref(item.SeriesId!))} className="self-start rounded-md">
+          <Focusable
+            accessibilityRole="link"
+            hitSlop={12}
+            onPress={() => router.push(itemHref(item.SeriesId!))}
+            className="self-start rounded-md"
+          >
             <Text className="text-sm font-medium text-primary" numberOfLines={1}>
               {item.SeriesName}
             </Text>

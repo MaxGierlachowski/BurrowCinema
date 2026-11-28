@@ -120,6 +120,7 @@ export function Focusable({
   onFocus,
   onBlur,
   ref,
+  accessibilityRole = 'button',
   ...props
 }: FocusableProps & { ref?: Ref<ViewRef> }): ReactElement {
   const [focused, setFocused] = useState(false)
@@ -127,6 +128,7 @@ export function Focusable({
   return (
     <Pressable
       ref={ref}
+      accessibilityRole={accessibilityRole}
       hasTVPreferredFocus={isTV && preferredFocus}
       onFocus={(e) => {
         setFocused(true)

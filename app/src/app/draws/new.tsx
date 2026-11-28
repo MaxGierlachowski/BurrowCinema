@@ -163,7 +163,7 @@ export default function NewDraw() {
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-background">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1 bg-background">
       <ScrollView contentContainerStyle={padding} keyboardShouldPersistTaps="handled">
         <BackHeader title="Neue Auslosung" />
         <View className="gap-6">

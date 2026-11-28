@@ -51,6 +51,7 @@ export function WatchedButton({ item }: { item: BaseItem }) {
       className="w-12 px-0"
       haptics={false}
       accessibilityLabel={value ? 'Als ungesehen markieren' : 'Als gesehen markieren'}
+      accessibilityRole="togglebutton"
       accessibilityState={{ checked: value }}
       onPress={toggle}
     >

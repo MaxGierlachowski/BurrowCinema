@@ -73,7 +73,7 @@ function Choice<T extends string | number | boolean>({
                 haptic.select()
                 onChange(option.value)
               }}
-              className={cn('h-9 justify-center rounded-lg border border-border px-3', active && 'border-primary bg-primary/15')}
+              className={cn('h-11 justify-center rounded-lg border border-border px-3', active && 'border-primary bg-primary/15')}
             >
               <Text className={cn('text-sm font-medium', active ? 'text-primary' : 'text-muted-foreground')}>{option.label}</Text>
             </Focusable>

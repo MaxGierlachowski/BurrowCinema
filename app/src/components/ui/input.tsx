@@ -1,8 +1,11 @@
+import type { ComponentRef, Ref } from 'react'
 import { TextInput, type TextInputProps } from 'react-native'
 import { colors } from '@shared/theme'
 import { cn } from '@/lib/utils'
 
-export function Input({ className, ...props }: TextInputProps & { className?: string }) {
+export type InputRef = ComponentRef<typeof TextInput>
+
+export function Input({ className, ...props }: TextInputProps & { className?: string; ref?: Ref<InputRef> }) {
   return (
     <TextInput
       placeholderTextColor={colors.mutedForeground}

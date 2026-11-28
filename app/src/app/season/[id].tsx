@@ -10,6 +10,7 @@ import { DetailLayout, DetailMessage, DetailSkeleton } from '@/components/media/
 import { EpisodeList, nextEpisodeOf } from '@/components/media/EpisodeList'
 import { episodeCode } from '@/components/media/MediaCard'
 import { PlayActions } from '@/components/media/PlayActions'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Text } from '@/components/ui/text'
 import { features } from '@/lib/features'
@@ -29,7 +30,13 @@ export default function SeasonScreen() {
   if (!season.data) {
     return (
       <DetailMessage>
-        <EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text={season.error?.message ?? 'Staffel nicht gefunden'} />
+        <EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text={season.error?.message ?? 'Staffel nicht gefunden'}>
+          {season.error && (
+            <Button variant="secondary" preferredFocus onPress={() => season.refetch()}>
+              Erneut versuchen
+            </Button>
+          )}
+        </EmptyState>
       </DetailMessage>
     )
   }
@@ -43,7 +50,7 @@ export default function SeasonScreen() {
       title={season.data.Name}
       kicker={
         show ? (
-          <Focusable accessibilityRole="link" onPress={() => router.push(itemHref(show.Id))} className="self-start rounded-md">
+          <Focusable accessibilityRole="link" hitSlop={12} onPress={() => router.push(itemHref(show.Id))} className="self-start rounded-md">
             <Text className="text-sm font-medium text-primary" numberOfLines={1}>
               {show.Name}
             </Text>

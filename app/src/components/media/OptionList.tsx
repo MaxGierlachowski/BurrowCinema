@@ -26,7 +26,7 @@ export function OptionList({ title, options, value, onChange }: Props) {
               haptic.select()
               onChange(option.value)
             }}
-            className="flex-row items-center gap-3 rounded-lg px-3 py-2.5 active:bg-accent"
+            className="flex-row items-center gap-3 rounded-lg px-3 py-3 active:bg-accent"
           >
             <View className={cn('size-5 items-center justify-center rounded-full border border-input', active && 'border-primary bg-primary')}>
               {active && <Icon as={Check} size={14} color="primaryForeground" />}

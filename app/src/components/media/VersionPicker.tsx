@@ -26,7 +26,7 @@ export function VersionPicker({ sources = [], value, onChange }: Props) {
                 haptic.select()
                 onChange(source.Id)
               }}
-              className={cn('rounded-lg border border-input px-3 py-2', active && 'border-primary bg-primary/15')}
+              className={cn('min-h-11 justify-center rounded-lg border border-input px-3', active && 'border-primary bg-primary/15')}
             >
               <Text className="text-sm font-medium" numberOfLines={1}>
                 {source.Name || `Version ${i + 1}`}

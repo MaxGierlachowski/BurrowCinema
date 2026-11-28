@@ -9,7 +9,7 @@ type Props<T extends string> = { value: T; onChange: (value: T) => void; options
 /** Segmented control styled like the web TabsList. */
 export function Segmented<T extends string>({ value, onChange, options, className }: Props<T>) {
   return (
-    <View accessibilityRole="tablist" className={cn('h-10 flex-row rounded-lg bg-muted p-[3px]', className)}>
+    <View accessibilityRole="tablist" className={cn('h-11 flex-row rounded-lg bg-muted p-[3px]', className)}>
       {options.map((option) => {
         const active = option.value === value
         return (
@@ -17,6 +17,7 @@ export function Segmented<T extends string>({ value, onChange, options, classNam
             key={option.value}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
+            hitSlop={{ top: 3, bottom: 3 }}
             onPress={() => {
               if (active) return
               haptic.select()

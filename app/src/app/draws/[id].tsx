@@ -235,7 +235,12 @@ export default function DrawDetail() {
         ListHeaderComponent={header}
         ListFooterComponent={footer}
         contentContainerStyle={padding}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} progressBackgroundColor={colors.card} />}
+        // No pull to refresh while swiping, it would fight the deck's vertical gestures.
+        refreshControl={
+          draw.status === 'running' ? undefined : (
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} progressBackgroundColor={colors.card} />
+          )
+        }
       />
     </View>
   )

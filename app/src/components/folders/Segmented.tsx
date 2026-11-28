@@ -21,12 +21,13 @@ export function Segmented<T extends string>({ options, value, onChange }: Props<
             key={option.value}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
+            hitSlop={{ top: 4, bottom: 4 }}
             onPress={() => {
               if (active) return
               haptic.select()
               onChange(option.value)
             }}
-            className={cn('rounded-lg px-4 py-1.5', active && 'bg-background')}
+            className={cn('h-9 justify-center rounded-lg px-4', active && 'bg-background')}
           >
             <Text className={cn('text-sm font-medium', active ? 'text-foreground' : 'text-muted-foreground')}>{option.label}</Text>
           </Focusable>

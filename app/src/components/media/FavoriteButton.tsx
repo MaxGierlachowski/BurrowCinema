@@ -14,6 +14,7 @@ export function FavoriteButton({ item }: { item: BaseItem }) {
       className="w-12 px-0"
       haptics={false}
       accessibilityLabel={value ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+      accessibilityRole="togglebutton"
       accessibilityState={{ checked: value }}
       onPress={toggle}
     >

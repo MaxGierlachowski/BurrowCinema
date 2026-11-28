@@ -5,6 +5,7 @@ import { RefreshControl, View } from 'react-native'
 import { fromJellyfin } from '@shared/folders'
 import { useSession } from '@shared/hooks/useAuth'
 import { getItems, type ItemFilter, type ItemType, type SortKey } from '@shared/jellyfin'
+import { load, save } from '@shared/storage'
 import { colors } from '@shared/theme'
 import { BurrowMark } from '@/components/BurrowMark'
 import { EmptyState } from '@/components/EmptyState'
@@ -38,6 +39,17 @@ const STATUS: { value: Status; label: string }[] = [
   { value: 'IsFavorite', label: 'Favoriten' },
 ]
 
+type Prefs = { sort: SortKey; status: Status }
+
+/** Sort and status filter, remembered per library type. Unknown stored values fall back to the defaults. */
+function loadPrefs(type: ItemType): Prefs {
+  const stored = load<Partial<Prefs>>(`bc.library.${type}`, {})
+  return {
+    sort: stored.sort && Object.hasOwn(SORTS, stored.sort) ? stored.sort : 'DateCreated',
+    status: STATUS.find((s) => s.value === stored.status)?.value ?? 'all',
+  }
+}
+
 function SortPicker({ value, onChange }: { value: SortKey; onChange: (sort: SortKey) => void }) {
   const [open, setOpen] = useState(false)
   const options = Object.entries(SORTS).map(([key, label]) => ({ value: key as SortKey, label }))
@@ -48,7 +60,7 @@ function SortPicker({ value, onChange }: { value: SortKey; onChange: (sort: Sort
       <Focusable
         accessibilityLabel="Sortierung"
         onPress={() => setOpen(true)}
-        className="h-10 w-40 flex-row items-center justify-between gap-2 rounded-lg border border-input bg-input/30 px-3"
+        className="h-11 w-40 flex-row items-center justify-between gap-2 rounded-lg border border-input bg-input/30 px-3"
       >
         <Text className="shrink text-sm" numberOfLines={1}>
           {SORTS[value]}
@@ -85,21 +97,27 @@ type Props = {
 export function LibraryGrid({ title, type, onTypeChange, rows, paddingBottom = 24, focusFirst }: Props) {
   const session = useSession()
   const client = useQueryClient()
-  const [sort, setSortState] = useState<SortKey>('DateCreated')
-  const [status, setStatusState] = useState<Status>('all')
+  const [prefs, setPrefs] = useState(() => loadPrefs(type))
+  const [prefsType, setPrefsType] = useState(type)
+  if (prefsType !== type) {
+    // The Filme/Serien switch changes the type in place: load that library's choice.
+    setPrefsType(type)
+    setPrefs(loadPrefs(type))
+  }
+  const { sort, status } = prefs
   const [refreshing, setRefreshing] = useState(false)
   const filters = status === 'all' ? undefined : status
   const focus = useFocusMemory(`library:${type}`)
   // Until the user picks a card or changes the sort or filter; afterwards the focus memory decides.
   const [initialFocus, setInitialFocus] = useState(!!focusFirst)
-  const setSort = (next: SortKey) => {
+  const changePrefs = (change: Partial<Prefs>) => {
     setInitialFocus(false)
-    setSortState(next)
+    const next = { ...prefs, ...change }
+    setPrefs(next)
+    save(`bc.library.${type}`, next)
   }
-  const setStatus = (next: Status) => {
-    setInitialFocus(false)
-    setStatusState(next)
-  }
+  const setSort = (sort: SortKey) => changePrefs({ sort })
+  const setStatus = (status: Status) => changePrefs({ status })
 
   const query = useInfiniteQuery({
     queryKey: ['items', type, sort, status],

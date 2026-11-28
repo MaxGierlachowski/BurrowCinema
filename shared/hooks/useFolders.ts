@@ -13,7 +13,11 @@ export function useFolders() {
   const mutation = useMutation({
     mutationFn: (folders: Folder[]) => saveFolders(session, folders),
     onMutate: (folders) => queryClient.setQueryData(KEY, folders),
-    onError: () => getPlatform().notify.error('Ordner konnten nicht mit Jellyfin synchronisiert werden'),
+    onError: () => {
+      getPlatform().notify.error('Ordner konnten nicht mit Jellyfin synchronisiert werden')
+      // Drop the optimistic state and reload what Jellyfin has.
+      void queryClient.invalidateQueries({ queryKey: KEY })
+    },
     scope: { id: 'folders' },
   })
 
@@ -26,6 +30,9 @@ export function useFolders() {
   return {
     folders: query.data ?? [],
     isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
     create: (name: string, items: FolderItem[] = []) =>
       update((folders) => [...folders, { id: uuid(), name, items, createdAt: Date.now() }]),
     rename: (id: string, name: string) => editFolder(id, (f) => ({ ...f, name })),

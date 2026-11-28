@@ -49,16 +49,29 @@ type Props = Omit<FocusableProps, 'children'> &
     haptics?: boolean
   }
 
-export function Button({ variant, size, className, icon, loading, children, haptics = true, disabled, onPress, ...props }: Props) {
+export function Button({
+  variant,
+  size,
+  className,
+  icon,
+  loading,
+  children,
+  haptics = true,
+  disabled,
+  onPress,
+  // Small sizes stay below 44dp, the slop makes up for it.
+  hitSlop = size === 'sm' || size === 'icon-sm' ? 4 : undefined,
+  ...props
+}: Props) {
   const color = textColor[variant ?? 'default']
   return (
     <Focusable
-      accessibilityRole="button"
       disabled={disabled || loading}
       onPress={(e) => {
         if (haptics) haptic.tap()
         onPress?.(e)
       }}
+      hitSlop={hitSlop}
       className={cn(buttonVariants({ variant, size }), (disabled || loading) && 'opacity-50', className)}
       {...props}
     >

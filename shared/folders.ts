@@ -51,13 +51,15 @@ export function itemLink(item: FolderItem) {
 }
 
 export async function loadFolders(s: Session): Promise<Folder[]> {
-  const cached = load<Folder[]>(cacheKey(s), [])
+  const cached = load<Folder[] | null>(cacheKey(s), null)
   try {
     const remote = await getCustomPref(s, PREF_KEY)
-    const folders = remote ? (JSON.parse(remote) as Folder[]) : cached
+    const folders = remote ? (JSON.parse(remote) as Folder[]) : (cached ?? [])
     save(cacheKey(s), folders)
     return folders
-  } catch {
+  } catch (error) {
+    // Without a local copy there is nothing to show, so let the screen offer a retry.
+    if (!cached) throw error
     return cached
   }
 }

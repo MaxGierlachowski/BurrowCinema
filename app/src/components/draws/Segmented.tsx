@@ -16,6 +16,7 @@ export function Segmented<T extends string>({ value, onChange, options, classNam
             key={option.value}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
+            hitSlop={{ top: 4, bottom: 4 }}
             onPress={() => {
               if (active) return
               haptic.select()

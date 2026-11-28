@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { DetailLayout, DetailMessage, DetailSkeleton } from '@/components/media/DetailLayout'
 import { WrapGrid } from '@/components/media/WrapGrid'
 import { PosterCard, PosterGridSkeleton } from '@/components/PosterCard'
+import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
 import { qk } from '@/lib/queryKeys'
 
@@ -26,7 +27,13 @@ export default function PersonScreen() {
   if (!person.data) {
     return (
       <DetailMessage>
-        <EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text={person.error?.message ?? 'Person nicht gefunden'} />
+        <EmptyState icon={BurrowMark} title="Dieser Gang führt nirgendwohin" text={person.error?.message ?? 'Person nicht gefunden'}>
+          {person.error && (
+            <Button variant="secondary" preferredFocus onPress={() => person.refetch()}>
+              Erneut versuchen
+            </Button>
+          )}
+        </EmptyState>
       </DetailMessage>
     )
   }

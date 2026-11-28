@@ -3,6 +3,7 @@ import { FolderHeart, Plus } from 'lucide-react-native'
 import { useState } from 'react'
 import { FlatList, useWindowDimensions, View } from 'react-native'
 import { useFolders } from '@shared/hooks/useFolders'
+import { BurrowMark } from '@/components/BurrowMark'
 import { EmptyState } from '@/components/EmptyState'
 import { FolderCard } from '@/components/folders/FolderCard'
 import { NameSheet } from '@/components/folders/NameSheet'
@@ -29,7 +30,7 @@ function FoldersSkeleton({ columns }: { columns: number }) {
 }
 
 export default function Folders() {
-  const { folders, isLoading, create } = useFolders()
+  const { folders, isLoading, isError, error, refetch, create } = useFolders()
   const [creating, setCreating] = useState(false)
   const columns = useFolderColumns()
 
@@ -48,6 +49,14 @@ export default function Folders() {
   )
   const empty = isLoading ? (
     <FoldersSkeleton columns={columns} />
+  ) : isError ? (
+    <View className="px-2">
+      <EmptyState icon={BurrowMark} title="Ordner konnten nicht geladen werden" text={error?.message}>
+        <Button variant="secondary" onPress={() => refetch()}>
+          Erneut versuchen
+        </Button>
+      </EmptyState>
+    </View>
   ) : (
     <View className="px-2">
       <EmptyState
