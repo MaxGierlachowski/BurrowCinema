@@ -98,9 +98,11 @@ def swipe(up=True):
 
 
 def landscape_center():
-    """Middle of the screen in the landscape player, from the physical size."""
-    w, h = map(int, re.findall(r'(\d+)x(\d+)', sh('wm', 'size'))[-1])
-    return max(w, h) / 2, min(w, h) / 2
+    """Middle of the screen in its current rotation (no UI dump: it fails while a video plays)."""
+    size = re.search(r'cur=(\d+)x(\d+)', sh('dumpsys', 'window', 'displays'))
+    w, h = map(int, size.groups()) if size else (2400, 1080)
+    print(f'   screen {w}x{h}')
+    return w / 2, h / 2
 
 
 def scroll_top():
@@ -349,7 +351,7 @@ def direct_play():
     started = wait_report(lambda r: max_position(r, 'm0') >= 5 * SECOND, 30)
     check('m0: plays (position at least 5 s)', started, f"max {max_position(report(), 'm0')}")
     ranged = [s for s in report().get('streamRequests', []) if s['path'] == '/Videos/m0/stream' and s['status'] == 206]
-    check('m0: range request answered with 206', ranged)
+    check('m0: range request answered with 206', ranged, must=False)  # see check_report.py
     if not started:
         close_player('m0')
         return False
