@@ -211,8 +211,11 @@ def show_controls(target):
     for _ in range(3):
         found = nodes()
         match = find(target, found)
+        if target == 'Position':  # adjustable views may report as SeekBar with the value in their description
+            match = match or [n for n in found if n.get('class') == 'android.widget.SeekBar' or label(n).startswith('Position')]
         if match:
             return match[0]
+        print(f'   {target} not in {texts(found)[:25]}')
         w, h = screen_size(found)
         tap_at(w * 0.25, h * 0.35)
         time.sleep(1.5)
@@ -436,8 +439,6 @@ def up_next():
         return
     pause('e2', since)
     bar = show_controls('Position')
-    if bar is None:  # adjustable views may report as android.widget.SeekBar with the value in their description
-        bar = next((n for n in nodes() if n.get('class') == 'android.widget.SeekBar' or label(n).startswith('Position')), None)
     if check('e2: seek bar Position', bar is not None):
         x1, y1, x2, y2 = bounds(bar)
         tap_at(x1 + (x2 - x1) * 0.85, (y1 + y2) / 2)
