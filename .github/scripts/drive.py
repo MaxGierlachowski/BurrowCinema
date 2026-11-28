@@ -224,9 +224,9 @@ def toggle_play(item, want_paused, since):
     No UI dump here: a playing video never lets uiautomator see an idle screen."""
     match = lambda r: any(e['IsPaused'] == want_paused and e['at'] >= since for e in reports(r, item, ('progress',)))
     x, y = landscape_center()
-    for _ in range(2):
+    for _ in range(3):  # quicker than the 4 s auto hide, or the next tap only shows the controls again
         tap_at(x, y)
-        if wait_report(match, 5):
+        if wait_report(match, 2):
             return True
     return False
 
