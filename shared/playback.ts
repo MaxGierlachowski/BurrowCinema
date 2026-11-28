@@ -1,4 +1,4 @@
-import { buildDeviceProfile, type DeviceCaps } from './deviceProfile'
+import { buildCastProfile, buildDeviceProfile, type DeviceCaps } from './deviceProfile'
 import {
   authHeader,
   deviceId,
@@ -30,6 +30,8 @@ export type PlaybackRequest = {
   maxBitrate: number
   caps: DeviceCaps
   enableDirectPlay?: boolean
+  /** 'cast': the stream is for a Chromecast, negotiated with its profile instead of this device's. */
+  target?: 'device' | 'cast'
 }
 
 export type PlaybackInfoResponse = { PlaySessionId: string; MediaSources: MediaSourceInfo[]; ErrorCode?: string }
@@ -76,7 +78,7 @@ export class PlaybackError extends Error {
 export function getPlaybackInfo(s: Session, req: PlaybackRequest) {
   const body = {
     UserId: s.userId,
-    DeviceProfile: buildDeviceProfile(req.caps, req.maxBitrate),
+    DeviceProfile: req.target === 'cast' ? buildCastProfile(req.maxBitrate) : buildDeviceProfile(req.caps, req.maxBitrate),
     MaxStreamingBitrate: req.maxBitrate,
     StartTimeTicks: req.startTicks ?? 0,
     AudioStreamIndex: req.audioStreamIndex,

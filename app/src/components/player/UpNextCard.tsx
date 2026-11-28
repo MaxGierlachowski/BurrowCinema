@@ -5,7 +5,7 @@ import { useSession } from '@shared/hooks/useAuth'
 import { thumbUrl, type BaseItem } from '@shared/jellyfin'
 import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
-import { FocusGuide } from '@/lib/tv'
+import { FocusGuide, isTV } from '@/lib/tv'
 
 export const episodeCode = (item: BaseItem) =>
   item.ParentIndexNumber !== undefined && item.IndexNumber !== undefined ? `S${item.ParentIndexNumber}:F${item.IndexNumber}` : undefined
@@ -29,10 +29,10 @@ export function UpNextCard({ episode, secondsLeft, focus, onPlay, onCancel }: Pr
         </View>
       </View>
       <View className="flex-row gap-2">
-        <Button size="sm" icon={Play} preferredFocus={focus} onPress={onPlay} className="flex-1">
+        <Button size={isTV ? 'sm' : 'default'} icon={Play} preferredFocus={focus} onPress={onPlay} className="flex-1">
           Jetzt abspielen
         </Button>
-        <Button size="sm" variant="secondary" onPress={onCancel}>
+        <Button size={isTV ? 'sm' : 'default'} variant="secondary" onPress={onCancel}>
           Abbrechen
         </Button>
       </View>

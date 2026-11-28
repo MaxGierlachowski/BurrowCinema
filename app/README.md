@@ -25,6 +25,8 @@ Native App zur Web App im Hauptordner. Plan und Begründung: [../docs/expo-plan.
 
 **Player** (nur nativ, kein Gegenstück im Web): `src/app/player/[id].tsx` mit `components/player/` und `lib/player/`. Die Wiedergabe läuft über react-native-video (Media3) und nur über `VideoSurface`. Was das Gerät abspielen kann, ermittelt `lib/deviceCaps.ts`; daraus baut `@shared/deviceProfile` das Profil für PlaybackInfo, `@shared/playback` wählt Direct Play, Remux oder Transcoding. Der Jellyfin Token geht nur an den eigenen Server, nie an fremde Quellen oder Untertitel.
 
+**Chromecast** (nur Handy): `react-native-google-cast` mit Googles Default Media Receiver. `useCasting()` aus `@/lib/cast` schaltet die Player Route zwischen `PlayerScreen` und `CastScreen` um; die Position wandert über `setHandoff`/`takeHandoff` mit. Der Stream wird mit `target: 'cast'` und `buildCastProfile` ausgehandelt, das Handy meldet Fortschritt an Jellyfin. Schließen des Cast Screens beendet die Wiedergabe am TV, die Verbindung bleibt. Auf dem TV wird das native Modul nie angesprochen.
+
 **Android TV.** Eine APK für Handy und TV (react-native-tvos, `@react-native-tvos/config-tv`).
 * Alles, was man antippen kann, ist auf dem TV ein `Focusable` aus `@/lib/tv` (gleiche Props wie `Pressable`, zeigt den Fokusrahmen). Ein normales `Pressable` ist mit der Fernbedienung nicht erreichbar.
 * Vollflächige Hintergründe (Sheet Backdrop, Overlays) bekommen `focusable={false}`, sonst fangen sie den Fokus.

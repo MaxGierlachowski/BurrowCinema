@@ -4,7 +4,7 @@ import { router } from 'expo-router'
 import * as ScreenOrientation from 'expo-screen-orientation'
 import { Activity, AudioLines, Gauge, ListOrdered, Ratio, SlidersHorizontal, Subtitles, X } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, AppState, Pressable, StyleSheet, View } from 'react-native'
+import { AccessibilityInfo, ActivityIndicator, AppState, Pressable, StyleSheet, useWindowDimensions, View, type GestureResponderEvent } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useSession } from '@shared/hooks/useAuth'
 import { getPlaybackItem, type BaseItem } from '@shared/jellyfin'
@@ -32,6 +32,7 @@ import { trackKey, usePlaybackSession, type TrackChange } from '@/lib/player/use
 import { useProgressReporter } from '@/lib/player/useProgressReporter'
 import { useSegments } from '@/lib/player/useSegments'
 import { noteInteraction, useUpNext } from '@/lib/player/useUpNext'
+import { setHandoff } from '@/lib/cast'
 import { qk } from '@/lib/queryKeys'
 import { playHref, type PlayParams } from '@/lib/routes'
 import { isTV, useBackHandler } from '@/lib/tv'
@@ -46,6 +47,7 @@ import { UpNextCard, episodeCode } from './UpNextCard'
 import { VideoSurface, type ResizeMode, type VideoSurfaceHandle } from './VideoSurface'
 
 const HIDE_AFTER_MS = isTV ? 5000 : 4000
+const DOUBLE_TAP_MS = 300
 const SEEK_HINT_MS = 2500
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
 const RESIZE_MODES: { value: ResizeMode; label: string }[] = [
@@ -73,16 +75,32 @@ function useLandscape() {
   }, [])
 }
 
-function PlayerMessage({ title, detail }: { title: string; detail?: string }) {
+function PlayerMessage({ title, detail, onRetry }: { title: string; detail?: string; onRetry: () => void }) {
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-black px-8">
       <Text className="text-center text-xl font-semibold">{title}</Text>
       {detail && <Text className="text-center text-sm text-muted-foreground">{detail}</Text>}
-      <Button variant="secondary" preferredFocus onPress={close}>
-        Zurück
-      </Button>
+      <View className="flex-row gap-3">
+        <Button preferredFocus onPress={onRetry}>
+          Erneut versuchen
+        </Button>
+        <Button variant="secondary" onPress={close}>
+          Zurück
+        </Button>
+      </View>
     </View>
   )
+}
+
+/** Controls stay visible while TalkBack runs; hiding them under the user's finger would be confusing. */
+function useScreenReader() {
+  const [enabled, setEnabled] = useState(false)
+  useEffect(() => {
+    AccessibilityInfo.isScreenReaderEnabled().then(setEnabled).catch(ignore)
+    const subscription = AccessibilityInfo.addEventListener('screenReaderChanged', setEnabled)
+    return () => subscription.remove()
+  }, [])
+  return enabled
 }
 
 function Loading() {
@@ -110,7 +128,8 @@ export function PlayerScreen({ id, params }: { id: string; params: PlayParams })
   useLandscape()
 
   const error = playback.error ?? (item.error ? item.error.message : undefined)
-  if (error) return <PlayerMessage title="Wiedergabe fehlgeschlagen" detail={error} />
+  const retry = () => (item.error ? item.refetch() : playback.retry())
+  if (error) return <PlayerMessage title="Wiedergabe fehlgeschlagen" detail={error} onRetry={retry} />
   if (!fresh || !playback.playback) return <Loading />
   return <Player item={fresh} settings={settings} session={playback} resolved={playback.playback} />
 }
@@ -141,6 +160,9 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
   const [seekBarFocused, setSeekBarFocused] = useState(false)
   const [seekHint, setSeekHint] = useState(0)
   const [interaction, setInteraction] = useState(0)
+  const screenReader = useScreenReader()
+  const { width } = useWindowDimensions()
+  const lastTap = useRef({ at: 0, side: 0 })
 
   const interact = () => {
     noteInteraction()
@@ -164,12 +186,28 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
     router.replace(playHref(episode.Id))
   }
 
-  // Auto hide while playing; paused, an open panel or dragging keep the controls.
+  // Auto hide while playing; paused, an open panel, dragging or a screen reader keep the controls.
   useEffect(() => {
-    if (!controls || paused || panel || scrubbing) return
+    if (!controls || paused || panel || scrubbing || screenReader) return
     const timer = setTimeout(() => setControls(false), HIDE_AFTER_MS)
     return () => clearTimeout(timer)
-  }, [controls, paused, panel, scrubbing, interaction])
+  }, [controls, paused, panel, scrubbing, screenReader, interaction])
+
+  /** Phone: a tap toggles the controls; a double tap on the left or right third skips back or forward. */
+  const onSurfaceTap = (e: GestureResponderEvent) => {
+    if (panel) return closePanel()
+    const x = e.nativeEvent.locationX
+    const side = x < width / 3 ? -1 : x > (width * 2) / 3 ? 1 : 0
+    const now = Date.now()
+    if (side && side === lastTap.current.side && now - lastTap.current.at < DOUBLE_TAP_MS) {
+      lastTap.current = { at: 0, side: 0 }
+      seekTo(position + side * settings.skipSeconds)
+      return showControls()
+    }
+    lastTap.current = { at: now, side }
+    if (controls) setControls(false)
+    else showControls()
+  }
 
   useEffect(() => {
     if (!seekHint) return
@@ -399,6 +437,7 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
         }}
         onProgress={(seconds) => {
           setPosition(seconds)
+          setHandoff(item.Id, seconds)
           reporter.progress(seconds)
         }}
         onBuffering={setBuffering}
@@ -411,7 +450,7 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
         <Pressable
           accessibilityLabel="Bedienung einblenden"
           style={StyleSheet.absoluteFill}
-          onPress={() => (panel ? closePanel() : controls ? setControls(false) : showControls())}
+          onPress={onSurfaceTap}
         />
       )}
 
@@ -443,6 +482,7 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
           title={title}
           subtitle={subtitle}
           paused={paused}
+          buffering={buffering}
           position={position}
           duration={duration}
           rate={rate}

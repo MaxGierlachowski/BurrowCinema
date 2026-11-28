@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { View, type GestureResponderEvent } from 'react-native'
+import { useRef, useState } from 'react'
+import { View, type AccessibilityActionEvent, type GestureResponderEvent } from 'react-native'
 import type { TrickplayTile } from '@shared/playback'
 import { Text } from '@/components/ui/text'
 import { clamp, formatTime } from '@/lib/player/time'
@@ -16,6 +16,8 @@ type Props = {
   pending?: number
   trickplay?: (seconds: number) => TrickplayTile | undefined
   onSeek: (seconds: number) => void
+  /** Seconds per screen reader increment or decrement. */
+  step?: number
   /** Phone: dragging started or ended (keeps the controls open). */
   onScrub?: (active: boolean) => void
   /** TV: the bar got or lost the focus; left and right then seek. */
@@ -25,16 +27,21 @@ type Props = {
 const PREVIEW_WIDTH = 192
 
 /**
- * Seek bar. On phones it is dragged with the responder system (no gesture package needed); the children ignore
- * touches so locationX is always relative to the bar. On TV it is focusable and the remote moves the position.
+ * Seek bar. On phones it is dragged with the responder system (no gesture package needed). Only the first touch
+ * uses locationX; moves follow pageX, because Android reports locationX relative to whatever view is under the
+ * finger, which made the thumb run ahead of it. On TV it is focusable and the remote moves the position.
  */
-export function SeekBar({ position, duration, chapters, pending, trickplay, onSeek, onScrub, onFocusChange }: Props) {
+export function SeekBar({ position, duration, chapters, pending, trickplay, onSeek, step = 10, onScrub, onFocusChange }: Props) {
   const [width, setWidth] = useState(0)
   const [drag, setDrag] = useState<number>()
+  const grab = useRef({ x: 0, pageX: 0 })
   const preview = drag ?? pending
   const shown = preview ?? position
   const ratio = duration > 0 ? clamp(shown / duration, 0, 1) : 0
-  const at = (e: GestureResponderEvent) => (width > 0 ? clamp(e.nativeEvent.locationX / width, 0, 1) * duration : 0)
+  const at = (e: GestureResponderEvent) => {
+    const x = grab.current.x + e.nativeEvent.pageX - grab.current.pageX
+    return width > 0 ? clamp(x / width, 0, 1) * duration : 0
+  }
 
   const track = (
     <View pointerEvents="none" className="h-1.5 justify-center rounded-full bg-white/25">
@@ -51,6 +58,9 @@ export function SeekBar({ position, duration, chapters, pending, trickplay, onSe
     accessibilityLabel: 'Position',
     accessibilityRole: 'adjustable' as const,
     accessibilityValue: { min: 0, max: Math.round(duration), now: Math.round(shown), text: formatTime(shown) },
+    accessibilityActions: [{ name: 'increment' as const }, { name: 'decrement' as const }],
+    onAccessibilityAction: (e: AccessibilityActionEvent) =>
+      onSeek(clamp(position + (e.nativeEvent.actionName === 'increment' ? step : -step), 0, duration || Infinity)),
   }
 
   return (
@@ -85,6 +95,7 @@ export function SeekBar({ position, duration, chapters, pending, trickplay, onSe
           onStartShouldSetResponder={() => true}
           onResponderTerminationRequest={() => false}
           onResponderGrant={(e) => {
+            grab.current = { x: e.nativeEvent.locationX, pageX: e.nativeEvent.pageX }
             onScrub?.(true)
             setDrag(at(e))
           }}
@@ -98,7 +109,7 @@ export function SeekBar({ position, duration, chapters, pending, trickplay, onSe
             setDrag(undefined)
             onScrub?.(false)
           }}
-          className="h-10 justify-center"
+          className="h-12 justify-center"
         >
           {track}
         </View>

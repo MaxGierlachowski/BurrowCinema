@@ -47,6 +47,10 @@ export function Title({ title, subtitle }: Pick<ControlsProps, 'title' | 'subtit
   )
 }
 
+/** Forward skip; while the duration is still unknown (0) it is not capped, or it would jump to the start. */
+export const skipTarget = (position: number, seconds: number, duration: number) =>
+  duration > 0 ? Math.min(duration, position + seconds) : position + seconds
+
 /** Audio, Untertitel, Qualität and the other panels. */
 export function PanelButtons({ panels, onPanel }: Pick<ControlsProps, 'panels' | 'onPanel'>) {
   return (
@@ -55,7 +59,7 @@ export function PanelButtons({ panels, onPanel }: Pick<ControlsProps, 'panels' |
         <Button
           key={panel.id}
           variant="ghost"
-          size="sm"
+          size={isTV ? 'sm' : 'default'}
           icon={panel.icon}
           accessibilityLabel={panel.label}
           onPress={() => onPanel(panel.id)}

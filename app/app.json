@@ -64,7 +64,7 @@
         {
           "android": {
             "usesCleartextTraffic": true,
-            "extraProguardRules": "# WorkManager (used by expo-background-task) creates its Room database by reflection;\n# without these rules R8 removes the constructor and the app crashes before it starts.\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.** { *; }\n# react-native-video und Media3: Renderer, Extractor und MediaSource Factories werden teils per Reflection geladen.\n-keep class com.brentvatne.** { *; }\n-keep class androidx.media3.** { *; }\n-dontwarn androidx.media3.**\n-dontwarn com.google.ads.interactivemedia.**"
+            "extraProguardRules": "# WorkManager (used by expo-background-task) creates its Room database by reflection;\n# without these rules R8 removes the constructor and the app crashes before it starts.\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.** { *; }\n# react-native-video und Media3: Renderer, Extractor und MediaSource Factories werden teils per Reflection geladen.\n-keep class com.brentvatne.** { *; }\n-keep class androidx.media3.** { *; }\n-dontwarn androidx.media3.**\n-dontwarn com.google.ads.interactivemedia.**\n# Google Cast: the options provider is loaded by name from the manifest\n-keep class com.reactnative.googlecast.** { *; }"
           }
         }
       ],
@@ -107,7 +107,14 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "./plugins/withCrashLog"
+      "./plugins/withCrashLog",
+      [
+        "react-native-google-cast",
+        {
+          "receiverAppId": "CC1AD845",
+          "expandedController": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -11,8 +11,10 @@ import {
   stopTranscode,
   type PlaybackRequest,
   type PlaybackSettings,
+  secondsToTicks,
   type ResolvedPlayback,
 } from '@shared/playback'
+import { takeHandoff } from '@/lib/cast'
 import { getDeviceCaps } from '@/lib/deviceCaps'
 import type { PlayParams } from '@/lib/routes'
 import { ignore } from './time'
@@ -23,7 +25,7 @@ export const trackKey = (item: BaseItem) => item.SeriesId ?? item.Id
 export type TrackChange = { audioStreamIndex?: number; subtitleStreamIndex?: number }
 
 // Our own errors are German; anything else (fetch's "Network request failed", broken JSON) is a connection problem.
-const errorText = (error: unknown) =>
+export const errorText = (error: unknown) =>
   error instanceof PlaybackError || error instanceof JellyfinError ? error.message : 'Verbindung zu Jellyfin fehlgeschlagen'
 
 /** Audio codecs the device profile direct plays (shared/deviceProfile.ts), AC 3 and E AC 3 only with caps.ac3. */
@@ -56,6 +58,7 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
   // Only the latest renegotiation may replace the stream (two quick changes, or leaving the player meanwhile).
   const generation = useRef(0)
   const latest = useRef({ item, params, settings })
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     latest.current = { item, params, settings }
@@ -70,10 +73,12 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
     ;(async () => {
       const source = item.MediaSources?.find((m) => m.Id === params.mediaSourceId) ?? item.MediaSources?.[0]
       const remembered = source ? applyTrackChoice(source, recallTracks(trackKey(item))) : {}
+      const handed = params.start === 'beginning' ? undefined : takeHandoff(item.Id)
       const request: PlaybackRequest = {
         itemId: item.Id,
         mediaSourceId: source?.Id,
-        startTicks: startTicksFor(item, params.start ?? 'resume', settings.resumeRewindSeconds),
+        // Coming back from the Chromecast continues where it was.
+        startTicks: handed !== undefined ? secondsToTicks(handed) : startTicksFor(item, params.start ?? 'resume', settings.resumeRewindSeconds),
         audioStreamIndex: params.audio ?? remembered.audioStreamIndex,
         subtitleStreamIndex: params.sub ?? remembered.subtitleStreamIndex,
         maxBitrate: settings.maxBitrate,
@@ -87,7 +92,7 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
     return () => {
       cancelled = true
     }
-  }, [session, itemId])
+  }, [session, itemId, attempt])
 
   useEffect(
     () => () => {
@@ -158,5 +163,11 @@ export function usePlaybackSession(session: Session, item: BaseItem | undefined,
   )
 
   const maxBitrate = lastRequest.current?.maxBitrate ?? settings.maxBitrate
-  return { playback, error, setError, changeTracks, changeQuality, fallback, maxBitrate }
+  const retry = useCallback(() => {
+    setError(undefined)
+    fellBack.current = false
+    setAttempt((n) => n + 1)
+  }, [])
+
+  return { playback, error, setError, changeTracks, changeQuality, fallback, retry, maxBitrate }
 }

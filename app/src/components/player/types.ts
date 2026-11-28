@@ -9,6 +9,8 @@ export type ControlsProps = {
   title: string
   subtitle?: string
   paused: boolean
+  /** The stream is loading; the play button shows a spinner instead. */
+  buffering?: boolean
   position: number
   duration: number
   rate: number

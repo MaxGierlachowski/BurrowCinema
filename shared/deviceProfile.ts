@@ -16,6 +16,46 @@ const list = (...codecs: (string | false)[]) => codecs.filter(Boolean).join(',')
  * the server then copies the video and only converts the audio.
  * Text subtitles are only offered as sidecar files (never Embed), so the player never has to map container track indexes.
  */
+/**
+ * Profile for a Chromecast with Google's Default Media Receiver: H.264 in MP4 and VP8/VP9 in WebM play directly,
+ * everything else comes as HLS with H.264 and AAC.
+ */
+export function buildCastProfile(maxBitrate: number): DeviceProfile {
+  return {
+    Name: 'BurrowCinema Chromecast',
+    MaxStaticBitrate: maxBitrate,
+    MaxStreamingBitrate: maxBitrate,
+    DirectPlayProfiles: [
+      { Type: 'Video', Container: 'mp4,m4v,mov', VideoCodec: 'h264', AudioCodec: 'aac,mp3,flac,opus' },
+      { Type: 'Video', Container: 'webm', VideoCodec: 'vp8,vp9', AudioCodec: 'opus,vorbis' },
+    ],
+    TranscodingProfiles: [
+      {
+        Type: 'Video',
+        Context: 'Streaming',
+        Protocol: 'hls',
+        Container: 'ts',
+        VideoCodec: 'h264',
+        AudioCodec: 'aac,mp3',
+        MaxAudioChannels: '2',
+        BreakOnNonKeyFrames: true,
+      },
+    ],
+    CodecProfiles: [
+      {
+        Type: 'Video',
+        Codec: 'h264',
+        Conditions: [
+          { Condition: 'LessThanEqual', Property: 'VideoBitDepth', Value: '8', IsRequired: false },
+          { Condition: 'LessThanEqual', Property: 'VideoLevel', Value: '42', IsRequired: false },
+        ],
+      },
+    ],
+    // Jellyfin converts other text subtitles to WebVTT; image subtitles need the transcode.
+    SubtitleProfiles: [{ Format: 'vtt', Method: 'External' }, ...IMAGE_SUBTITLES.map((Format) => ({ Format, Method: 'Encode' }))],
+  }
+}
+
 export function buildDeviceProfile(caps: DeviceCaps, maxBitrate: number): DeviceProfile {
   const dolby = caps.ac3 && 'ac3,eac3'
   const subtitles = caps.sidecarSubtitles

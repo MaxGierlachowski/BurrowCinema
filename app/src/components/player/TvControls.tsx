@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
 import { clamp, formatTime } from '@/lib/player/time'
 import { FocusGuide, isTV, useRemoteKeys, type RemoteKey } from '@/lib/tv'
-import { Clock, PanelButtons, Title } from './ControlsParts'
+import { Clock, PanelButtons, skipTarget, Title } from './ControlsParts'
 import { SeekBar } from './SeekBar'
 import { TrickplayPreview } from './TrickplayPreview'
 import type { ControlsProps } from './types'
@@ -63,7 +63,7 @@ export function TvControls(props: ControlsProps) {
             size="icon"
             icon={RotateCw}
             accessibilityLabel={`${skipSeconds} Sekunden vor`}
-            onPress={() => onSeek(Math.min(duration, position + skipSeconds))}
+            onPress={() => onSeek(skipTarget(position, skipSeconds, duration))}
           />
           {props.onNext && (
             <Button variant="ghost" size="icon" icon={SkipForward} accessibilityLabel="Nächste Folge" onPress={props.onNext} />

@@ -1,10 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient'
-import { Pause, PictureInPicture2, Play, RotateCcw, RotateCw, X } from 'lucide-react-native'
-import { StyleSheet, View } from 'react-native'
+import { Pause, PictureInPicture2, Play, RotateCcw, RotateCw, SkipBack, SkipForward, X } from 'lucide-react-native'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { colors } from '@shared/theme'
 import { Button } from '@/components/ui/button'
+import { CastButton } from '@/lib/cast'
 import { Clock, PanelButtons, Title } from './ControlsParts'
 import { SeekBar } from './SeekBar'
+import { skipTarget } from './ControlsParts'
 import type { ControlsProps } from './types'
 
 /** Touch controls. Empty areas let taps through to the layer below, which hides the controls. */
@@ -26,12 +29,16 @@ export function PhoneControls(props: ControlsProps) {
         <Button variant="ghost" size="icon" icon={X} accessibilityLabel="Player schließen" onPress={props.onClose} />
         <Title title={props.title} subtitle={props.subtitle} />
         <Clock position={position} duration={duration} rate={props.rate} />
+        <CastButton />
         {props.onPip && (
           <Button variant="ghost" size="icon" icon={PictureInPicture2} accessibilityLabel="Bild in Bild" onPress={props.onPip} />
         )}
       </View>
 
-      <View pointerEvents="box-none" className="absolute inset-0 flex-row items-center justify-center gap-12">
+      <View pointerEvents="box-none" className="absolute inset-0 flex-row items-center justify-center gap-8">
+        {props.onPrevious && (
+          <Button variant="ghost" size="icon-lg" icon={SkipBack} accessibilityLabel="Vorherige Folge" onPress={props.onPrevious} />
+        )}
         <Button
           variant="ghost"
           size="icon-lg"
@@ -41,18 +48,23 @@ export function PhoneControls(props: ControlsProps) {
         />
         <Button
           size="icon-lg"
-          icon={paused ? Play : Pause}
+          icon={props.buffering ? undefined : paused ? Play : Pause}
           accessibilityLabel={paused ? 'Wiedergabe fortsetzen' : 'Wiedergabe pausieren'}
           onPress={onTogglePlay}
           className="size-16"
-        />
+        >
+          {props.buffering && <ActivityIndicator color={colors.primaryForeground} />}
+        </Button>
         <Button
           variant="ghost"
           size="icon-lg"
           icon={RotateCw}
           accessibilityLabel={`${skipSeconds} Sekunden vor`}
-          onPress={() => onSeek(Math.min(duration, position + skipSeconds))}
+          onPress={() => onSeek(skipTarget(position, skipSeconds, duration))}
         />
+        {props.onNext && (
+          <Button variant="ghost" size="icon-lg" icon={SkipForward} accessibilityLabel="Nächste Folge" onPress={props.onNext} />
+        )}
       </View>
 
       <View pointerEvents="box-none" className="mt-auto gap-1" style={[padding, { paddingBottom: insets.bottom + 8 }]}>
@@ -61,6 +73,7 @@ export function PhoneControls(props: ControlsProps) {
           duration={duration}
           chapters={props.chapters}
           trickplay={props.trickplay}
+          step={skipSeconds}
           onSeek={onSeek}
           onScrub={props.onScrub}
         />
