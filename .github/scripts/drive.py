@@ -436,6 +436,8 @@ def up_next():
         return
     pause('e2', since)
     bar = show_controls('Position')
+    if bar is None:  # adjustable views may report as android.widget.SeekBar with the value in their description
+        bar = next((n for n in nodes() if n.get('class') == 'android.widget.SeekBar' or label(n).startswith('Position')), None)
     if check('e2: seek bar Position', bar is not None):
         x1, y1, x2, y2 = bounds(bar)
         tap_at(x1 + (x2 - x1) * 0.85, (y1 + y2) / 2)

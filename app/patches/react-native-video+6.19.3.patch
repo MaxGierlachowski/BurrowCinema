@@ -1,0 +1,20 @@
+diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
+index 623d90c..8d8c237 100644
+--- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
++++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
+@@ -1224,6 +1224,15 @@ public class ReactExoplayerView extends FrameLayout implements
+                 mediaSourceFactory
+         );
+ 
++        // BurrowCinema patch: the progressive and HLS factories ignore MediaItem subtitle configurations,
++        // only DefaultMediaSourceFactory merges sideloaded subtitles into the source.
++        if (subtitleConfigurations != null && (type == CONTENT_TYPE_OTHER || type == CONTENT_TYPE_HLS) && !"asset".equals(uri.getScheme())) {
++            if (type == CONTENT_TYPE_HLS) {
++                mediaItemBuilder.setMimeType(androidx.media3.common.MimeTypes.APPLICATION_M3U8);
++            }
++            mediaSourceFactory = new DefaultMediaSourceFactory(mediaDataSourceFactory);
++        }
++
+         mediaItemBuilder.setStreamKeys(streamKeys);
+ 
+         @Nullable
