@@ -415,6 +415,17 @@ function Player({ item, settings, session: negotiation, resolved }: PlayerProps)
         />
       )}
 
+      {isTV && !controlsShown && !panel && !upNext.stillWatching && !segmentLabel && !upNext.visible && (
+        // Holds the focus while the controls are hidden: without a focused view Android TV never passes the remote keys to JS.
+        <Pressable
+          accessibilityLabel="Bedienung einblenden"
+          hasTVPreferredFocus
+          focusable
+          onPress={showControls}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+
       {buffering && !controlsShown && (
         <View pointerEvents="none" className="absolute inset-0 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />

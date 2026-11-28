@@ -26,12 +26,18 @@ def key(*names, pause=0.6):
 
 
 def nodes():
-    sh('rm', '-f', '/sdcard/ui.xml')
-    sh('uiautomator', 'dump', '/sdcard/ui.xml', timeout=25)
-    try:
-        return list(ET.fromstring(sh('cat', '/sdcard/ui.xml')).iter('node'))
-    except ET.ParseError:
-        return []
+    # A dump can fail while the screen animates (loading skeletons), so try a few times.
+    for _ in range(3):
+        sh('rm', '-f', '/sdcard/ui.xml')
+        sh('uiautomator', 'dump', '/sdcard/ui.xml', timeout=25)
+        try:
+            found = list(ET.fromstring(sh('cat', '/sdcard/ui.xml')).iter('node'))
+        except ET.ParseError:
+            found = []
+        if found:
+            return found
+        time.sleep(1)
+    return []
 
 
 def label(node):
@@ -238,7 +244,7 @@ def login_and_tabs():
     tap_text('Anmelden', last=True)
     time.sleep(10)
     step('after login')
-    check('signed in', wait_for('Einstellungen', 10))
+    check('signed in', wait_for('Einstellungen', 30))
 
     for tab in TABS:
         tap_text(tab, last=True)
@@ -253,7 +259,12 @@ def login_and_tabs():
 
 
 def folder_sheets():
-    tap_text('Dune')
+    tap_text('Bibliothek', last=True)
+    time.sleep(3)
+    node = find_scrolling('Dune')
+    if not check('Dune found for the folder sheets', node is not None):
+        return
+    tap(node)
     time.sleep(5)
     step('detail Dune')
     # Bottom sheets: add the open title to a new folder, then open the folder actions.
