@@ -402,13 +402,19 @@ def fallback():
 
 def up_next():
     """Severance: season page, episode 2, seek to 85 %, Up Next starts episode 3."""
-    tap_text('Bibliothek', last=True)
+    # Through search: on the library tab the first Severance is the episode card in Nächste Folgen.
+    tap_text('Suche', last=True)
     time.sleep(3)
-    scroll_top()
-    node = find_scrolling('Severance')
-    if node is None and tap_text('Serien'):
-        time.sleep(3)
-        node = find_scrolling('Severance')
+    node = None
+    fields = [n for n in nodes() if n.get('class') == 'android.widget.EditText']
+    if fields:
+        tap(fields[0])
+        time.sleep(0.5)
+        sh('input', 'text', 'Severance')
+        time.sleep(4)
+        hide_keyboard()
+        time.sleep(1)
+        node = next((n for n in find('Severance') if n.get('class') != 'android.widget.EditText'), None)
     if not check('Severance found', node is not None):
         return
     tap(node)

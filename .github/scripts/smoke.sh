@@ -18,6 +18,8 @@ bash "$SCRIPTS/make-media.sh" || fail "test media could not be generated"
 node "$SCRIPTS/mock-jellyfin.cjs" > "smoke-$MODE-mock.txt" 2>&1 &
 for _ in $(seq 20); do curl -sf http://127.0.0.1:8096/System/Info/Public > /dev/null && break; sleep 0.5; done
 adb install -r "$APK" || fail "adb install failed"
+# The first full screen video shows a system hint that takes the focus; real devices show it once.
+adb shell settings put secure immersive_mode_confirmations confirmed
 
 if [ "$MODE" = tv ]; then
   CATEGORY=android.intent.category.LEANBACK_LAUNCHER
