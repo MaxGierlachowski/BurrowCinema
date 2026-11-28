@@ -40,6 +40,8 @@ npx expo export --platform android --output-dir /tmp/<eigener-ordner>
 ```
 Pakete nur mit `npx expo install` hinzufügen.
 
+**Patches.** `patches/react-native-video+6.19.3.patch` (über `patch-package` beim Installieren): Ohne ihn lädt react-native-video externe Untertitel nicht. Bei einem Update von react-native-video prüfen, ob er noch nötig ist.
+
 ## Starten
 ```bash
 npm install
