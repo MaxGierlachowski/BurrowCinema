@@ -16,12 +16,14 @@ import { PosterCard, PosterGridSkeleton } from '@/components/PosterCard'
 import { Screen } from '@/components/Screen'
 import { ArrForm, ARR_HINT } from '@/components/settings/ArrForm'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { Input } from '@/components/ui/input'
 import { Sheet } from '@/components/ui/sheet'
 import { SheetInput } from '@/components/ui/sheet-input'
 import { Text } from '@/components/ui/text'
 import { haptic } from '@/lib/haptics'
+import { isTV } from '@/lib/tv'
 
 function useDebounced(value: string, delay = 400) {
   const [debounced, setDebounced] = useState(value)
@@ -211,6 +213,16 @@ export default function Search() {
                 </>
               }
             />
+            {isTV && (
+              // Inline text links cannot take the remote focus, so the TV gets buttons for them.
+              <View className="mt-4 flex-row justify-center gap-3">
+                {(['radarr', 'sonarr'] as const).map((kind) => (
+                  <Button key={kind} variant="secondary" icon={arr[kind] ? CheckCircle2 : undefined} onPress={() => openArr(kind)}>
+                    {`${ARR_LABEL[kind]} verbinden`}
+                  </Button>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
