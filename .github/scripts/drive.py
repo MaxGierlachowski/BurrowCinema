@@ -29,7 +29,9 @@ def nodes():
     # A dump can fail while the screen animates (loading skeletons), so try a few times.
     for _ in range(3):
         sh('rm', '-f', '/sdcard/ui.xml')
-        sh('uiautomator', 'dump', '/sdcard/ui.xml', timeout=25)
+        out = sh('uiautomator', 'dump', '/sdcard/ui.xml', timeout=25)
+        if 'ERROR' in out:
+            print(f'!! dump: {out.strip()[:120]}')
         try:
             found = list(ET.fromstring(sh('cat', '/sdcard/ui.xml')).iter('node'))
         except ET.ParseError:
@@ -95,6 +97,25 @@ def swipe(up=True):
     time.sleep(1.5)
 
 
+def landscape_center():
+    """Middle of the screen in the landscape player, from the physical size."""
+    w, h = map(int, re.findall(r'(\d+)x(\d+)', sh('wm', 'size'))[-1])
+    return max(w, h) / 2, min(w, h) / 2
+
+
+def scroll_top():
+    for _ in range(4):
+        swipe(up=False)
+
+
+def diagnose():
+    focus = re.findall(r'mCurrentFocus=.*', sh('dumpsys', 'window'))
+    print(f'   focus: {focus[:1]}')
+    log = subprocess.run(['adb', 'logcat', '-d', '-t', '400'], capture_output=True, text=True).stdout.splitlines()
+    for line in [l for l in log if 'ReactNativeJS' in l or 'PictureInPicture' in l or 'ExoPlayer' in l][-12:]:
+        print(f'   {line[:200]}')
+
+
 def find_scrolling(text, swipes=6):
     """Scrolls down until the text is on screen. Returns its node or None."""
     for _ in range(swipes + 1):
@@ -152,6 +173,8 @@ def max_position(r, item):
 def check(name, ok, detail='', must=True):
     results.append((name, bool(ok), must))
     print(f"{'ok  ' if ok else ('FAIL' if must else 'WARN')} {name}{f' ({detail})' if detail else ''}", flush=True)
+    if must and not ok:
+        diagnose()
     return bool(ok)
 
 
@@ -194,24 +217,33 @@ def show_controls(target):
     return None
 
 
+def toggle_play(item, want_paused, since):
+    """Taps the play button in the middle of the player (the first tap may only show the controls).
+    No UI dump here: a playing video never lets uiautomator see an idle screen."""
+    match = lambda r: any(e['IsPaused'] == want_paused and e['at'] >= since for e in reports(r, item, ('progress',)))
+    x, y = landscape_center()
+    for _ in range(2):
+        tap_at(x, y)
+        if wait_report(match, 5):
+            return True
+    return False
+
+
 def pause(item, since):
-    """Pauses with the media key, falling back to the pause button. True once the mock saw IsPaused."""
+    """Pauses with the media key, else with the pause button. True once the mock saw IsPaused."""
     key('KEYCODE_MEDIA_PAUSE')
     paused = lambda r: any(e['IsPaused'] and e['at'] >= since for e in reports(r, item, ('progress',)))
-    if wait_report(paused, 5):
-        return check(f'{item}: media key pause reports IsPaused', True)
-    check(f'{item}: media key pause reports IsPaused', False)
-    button = show_controls('Wiedergabe pausieren')
-    if button is not None:
-        tap(button)
-    return bool(wait_report(paused, 5))
+    # Phones have no focused view in touch mode, so Android may not hand media keys to the app.
+    if check(f'{item}: media key pause reports IsPaused', wait_report(paused, 5), must=False):
+        return True
+    return check(f'{item}: pause button reports IsPaused', toggle_play(item, True, since))
 
 
 def close_player(item):
     """Back until the mock got Stopped for the item (an open panel or the controls may take one press each)."""
-    for _ in range(3):
+    for _ in range(4):
         key('KEYCODE_BACK', pause=1)
-        if wait_report(lambda r: reports(r, item, ('stopped',)), 4):
+        if wait_report(lambda r: reports(r, item, ('stopped',)), 5):
             return check(f'{item}: stopped after back', True)
     return check(f'{item}: stopped after back', False)
 
@@ -220,6 +252,7 @@ def play(item, name):
     """Opens the title from the library tab and presses Abspielen. Returns the start time in ms."""
     tap_text('Bibliothek', last=True)
     time.sleep(3)
+    scroll_top()
     node = find_scrolling(name)
     if not check(f'{name} found in the library', node is not None):
         return None
@@ -243,6 +276,10 @@ def login_and_tabs():
     check('login form has Mit Quick Connect anmelden', find('Mit Quick Connect anmelden'), must=False)
     tap_text('Anmelden', last=True)
     time.sleep(10)
+    for allow in ['Allow', 'Zulassen']:  # Android asks for notifications right after the login
+        if find(allow):
+            tap_text(allow)
+            time.sleep(2)
     step('after login')
     check('signed in', wait_for('Einstellungen', 30))
 
@@ -293,6 +330,7 @@ def folder_sheets():
 def home_rows():
     tap_text('Bibliothek', last=True)
     time.sleep(4)
+    scroll_top()  # the tab keeps the scroll position from looking for Dune
     seen = set()
     for _ in range(3):
         seen |= set(texts())
@@ -366,6 +404,7 @@ def up_next():
     """Severance: season page, episode 2, seek to 85 %, Up Next starts episode 3."""
     tap_text('Bibliothek', last=True)
     time.sleep(3)
+    scroll_top()
     node = find_scrolling('Severance')
     if node is None and tap_text('Serien'):
         time.sleep(3)
@@ -393,7 +432,7 @@ def up_next():
         x1, y1, x2, y2 = bounds(bar)
         tap_at(x1 + (x2 - x1) * 0.85, (y1 + y2) / 2)
         time.sleep(2)
-        key('KEYCODE_MEDIA_PLAY')
+        tap_at(*landscape_center())  # play, the controls stay visible while paused
         check('e2: stopped before the next episode', wait_report(lambda r: reports(r, 'e2', ('stopped',)), 30), must=False)
         check('e3: starts through Up Next', wait_report(lambda r: reports(r, 'e3', ('playing',)), 25))
         close_player('e3')
